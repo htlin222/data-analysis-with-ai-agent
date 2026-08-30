@@ -10,3 +10,8 @@ __pycache__/
 *.pyc
 .rec_bashrc
 *.cast.part
+
+# 全域 gitignore 有 vendor/，但站台的 asciinema-player 就放在那裡，
+# 沒有它整個錄影頁都跑不起來。先解除目錄本身才能再解除內容。
+!site/assets/vendor/
+!site/assets/vendor/**
