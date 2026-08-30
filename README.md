@@ -85,17 +85,23 @@ tmux 會把 claude 的輸出重排進自己的格子，再送出「只重畫有�
 中間沒有第二套排版邏輯，殘影消失。純 shell 的段落不受影響，
 因為那是往下追加的輸出，不做游標定位重畫。
 
-### 其他實作上的限制：
+### 其他實作上的限制
 
 - **marker 不能用牆鐘時間定位。** `asciinema --idle-time-limit` 在錄製當下即壓縮
   時間軸，驅動端的偏移與 cast 內部時間不成線性對應。改為在輸出串流中搜尋
   指令回顯（shell）或提示詞在輸入框的渲染（TUI）。
 - **TUI 的回合結束不能用「連續 N 秒沒有輸出」判斷**：游標一直在閃，
   輸出永遠不會完全停。改看輸出速率——2 秒窗內少於 220 bytes 才算閒置。
-- **答完信任對話框後要等輸入框真的就緒**（`-- INSERT --` 出現），
-  否則第一個提示詞會打進還在開機的畫面被吃掉。
+- **等輸入框就緒還不夠**。`-- INSERT --` 出現之後，SessionStart hook
+  的訊息才姍姍來遲，那次重繪會把已經打進去的字清掉。所以還要再等一次靜止，
+  而且送出前要比對回顯、確認提示詞真的在輸入框裡，沒收到就 `Ctrl-U` 清行重打。
+  這是唯一可靠的作法：不管畫面為什麼被重繪，字沒進去就不按 Enter。
 - **錄到 `.cast.part`，六輪都完成才換上去。** 直接寫目標檔的話，
   中途失敗會把上一份完整錄影截斷，且無法復原。
+
+驗證方式：`site/casts/02_claude.json` 的第一個與第二個 marker 若只差十秒左右，
+就代表第一個提示詞被吃掉了——正常的一輪要幾十秒，而且兩個 marker 之間
+應該找得到提示詞本身的回顯。
 - **`tmux send-keys -l ";"` 的分號會被 tmux 自己的參數解析吃掉**，需送 `\;`。
 
 Claude Code 段的工作目錄是 `$TMPDIR/dawa-claude-demo`，開始時只有 `raw/`，
@@ -106,6 +112,22 @@ Claude Code 段的工作目錄是 `$TMPDIR/dawa-claude-demo`，開始時只有 `
 設定 `pauseOnMarkers: true`。
 
 ---
+
+## 部署
+
+推到 `main` 且 `site/**` 有變動時，`.github/workflows/pages.yml` 會：
+
+1. 跑 `scripts/check_site.py` 檢查資產引用完整性
+2. 把 `?v=` 快取破解參數對齊當次 commit 的短 SHA
+3. 上傳 `site/` 並部署到 GitHub Pages
+
+站台：<https://htlin222.github.io/data-analysis-with-ai-agent/>
+
+repo 是私有的，但 **Pages 站台是公開的**——私有 Pages 需要 Enterprise Cloud 方案。
+
+`check_site.py` 會比對 `git ls-files` 而不只是工作目錄。這很重要：
+全域 gitignore 的 `vendor/` 曾讓 `site/assets/vendor/` 的 asciinema-player
+沒進版控，本機一切正常而線上整個錄影頁掛掉。
 
 ## 資料
 
@@ -143,12 +165,14 @@ Claude Code 段的工作目錄是 `$TMPDIR/dawa-claude-demo`，開始時只有 `
 ## 檔案結構
 
 ```
+.github/workflows/pages.yml   推到 main 就部署 site/ 到 GitHub Pages
 raw/            原始資料，唯讀
 scripts/        01_clean.R → 02_describe.R → 03_survival.R
                 record_cast.py · segments.py（shell 錄影）
                 record_claude.py（Claude Code 錄影）
                 serve.py（本機伺服器＋編輯寫檔端點）
                 make_reference_run.py（產出快照）
+                check_site.py（部署前的資產完整性檢查）
 output/         清洗後資料與表格（可刪，由 make 重建）
 figs/           圖檔（可刪，由 make 重建）
 docs/           cleaning_log.md — 每項處理決定的依據
