@@ -1,0 +1,174 @@
+/* base.css — 全站共用：設計 token、16:9 舞台、chrome
+   暗底 + 單一強調色。除了強調色與終端機語法，其餘一律灰階。 */
+
+:root {
+  --bg:      #0a0a0b;
+  --panel:   #121214;
+  --panel-2: #17171a;
+  --hair:    #26262b;
+  --hair-2:  #35353c;
+  --ink:     #eceae7;
+  --ink-2:   #9d9a95;
+  --ink-3:   #67645f;
+  --accent:  #d97757;
+  --accent-d:#8a4529;
+
+  --sans: "PingFang TC", "Noto Sans TC", "Hiragino Sans", -apple-system,
+          BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  --mono: "SF Mono", "JetBrains Mono", "Menlo", ui-monospace, monospace;
+
+  --stage-w: 1280px;
+  --stage-h: 720px;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0; height: 100%;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--sans);
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+}
+
+a { color: inherit; text-decoration: none; }
+::selection { background: var(--accent-d); color: #fff; }
+
+/* ---------- 16:9 舞台 ----------------------------------------------------
+   內容一律在 1280x720 的座標系裡排版，再整體縮放去貼合視窗。
+   投影片與 demo 因此在任何螢幕上都長得一模一樣。 */
+.stage-wrap {
+  position: fixed; inset: 0;
+  display: grid; place-items: center;
+  background:
+    radial-gradient(120% 90% at 50% -20%, #16161a 0%, var(--bg) 62%);
+}
+.stage {
+  width: var(--stage-w); height: var(--stage-h);
+  position: relative; overflow: hidden;
+  transform: scale(var(--scale, 1));
+  transform-origin: center center;
+  background: var(--bg);
+  border: 1px solid var(--hair);
+  border-radius: 10px;
+  box-shadow: 0 40px 120px -40px #000;
+}
+
+/* ---------- chrome：左上返回、右上控制、底部進度 ------------------------ */
+.chrome {
+  position: absolute; z-index: 40;
+  font-size: 12px; letter-spacing: .04em;
+  color: var(--ink-3);
+}
+.home-link {
+  left: 18px; top: 16px;
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 5px 11px 5px 8px;
+  border: 1px solid var(--hair); border-radius: 999px;
+  background: rgba(18,18,20,.7); backdrop-filter: blur(6px);
+  transition: color .15s, border-color .15s;
+}
+.home-link:hover { color: var(--ink); border-color: var(--hair-2); }
+
+.counter {
+  right: 18px; top: 16px;
+  font-family: var(--mono); font-size: 11px;
+  color: var(--ink-3);
+}
+.counter b { color: var(--ink-2); font-weight: 500; }
+
+.progress {
+  left: 0; right: 0; bottom: 0; height: 2px;
+  background: var(--hair);
+}
+.progress .fill {
+  height: 100%; width: 0;
+  background: var(--accent);
+  transition: width .3s cubic-bezier(.4,0,.2,1);
+}
+
+.hint {
+  left: 50%; bottom: 14px; transform: translateX(-50%);
+  font-size: 11px; color: var(--ink-3);
+  opacity: 0; transition: opacity .3s;
+  pointer-events: none;
+}
+.stage:hover .hint { opacity: 1; }
+kbd {
+  font-family: var(--mono); font-size: 10px;
+  padding: 1px 5px; margin: 0 1px;
+  border: 1px solid var(--hair-2); border-radius: 4px;
+  color: var(--ink-2);
+}
+
+/* ---------- 通用排版 ----------------------------------------------------- */
+.eyebrow {
+  font-size: 12px; letter-spacing: .16em; text-transform: uppercase;
+  color: var(--accent); margin-bottom: 18px;
+}
+h1.display {
+  font-size: 62px; line-height: 1.08; font-weight: 600;
+  letter-spacing: -.02em; margin: 0 0 22px;
+}
+h2.head {
+  font-size: 38px; line-height: 1.2; font-weight: 600;
+  letter-spacing: -.015em; margin: 0 0 20px;
+}
+p.lede {
+  font-size: 19px; line-height: 1.65; color: var(--ink-2);
+  max-width: 62ch; margin: 0 0 20px;
+}
+.muted { color: var(--ink-3); }
+b, strong { font-weight: 600; color: var(--ink); }
+em.hl { font-style: normal; color: var(--accent); }
+
+code, .mono { font-family: var(--mono); }
+.tag {
+  display: inline-block; font-family: var(--mono); font-size: 11px;
+  padding: 2px 8px; border: 1px solid var(--hair-2); border-radius: 999px;
+  color: var(--ink-2);
+}
+
+/* ---------- 就地編輯 ---------------------------------------------------- */
+.editable { outline: 1px dashed var(--hair-2); outline-offset: 3px; border-radius: 3px; }
+.editable:hover { outline-color: var(--accent); cursor: text; }
+.editable:focus { outline: 1px solid var(--accent); outline-offset: 3px;
+                  background: rgba(217,119,87,.06); }
+body.editing [data-step] { opacity: 1 !important; transform: none !important; }
+
+#edit-badge {
+  position: absolute; left: 50%; top: 16px; transform: translateX(-50%);
+  z-index: 60; font-family: var(--mono); font-size: 11px; color: var(--accent);
+  background: var(--panel); border: 1px solid var(--accent); border-radius: 999px;
+  padding: 5px 14px; opacity: 0; transition: opacity .2s; pointer-events: none;
+}
+#edit-badge.on { opacity: 1; }
+#edit-badge .k { color: var(--ink-3); margin-left: 8px; }
+
+#export-box {
+  position: absolute; inset: 0; z-index: 90; display: none;
+  background: rgba(10,10,11,.94); padding: 60px 80px;
+  flex-direction: column; gap: 12px;
+}
+#export-box.on { display: flex; }
+#export-box h3 { margin: 0; font-size: 17px; font-weight: 600; }
+#export-box p { margin: 0; font-size: 12.5px; color: var(--ink-2); line-height: 1.7; }
+#export-box code { color: var(--accent); }
+#export-box textarea {
+  flex: 1; width: 100%; resize: none;
+  font-family: var(--mono); font-size: 11.5px; line-height: 1.6;
+  background: var(--panel); color: var(--ink-2);
+  border: 1px solid var(--hair-2); border-radius: 8px; padding: 14px;
+}
+#export-box .row { display: flex; gap: 10px; }
+#export-box button {
+  font-family: var(--mono); font-size: 11px; color: var(--ink-2);
+  background: var(--panel); border: 1px solid var(--hair-2); border-radius: 6px;
+  padding: 7px 14px; cursor: pointer;
+}
+#export-box button:hover { color: var(--ink); border-color: var(--accent); }
+#export-box .status { font-family: var(--mono); font-size: 11.5px; color: var(--ink-2);
+                      border: 1px solid var(--hair-2); border-radius: 6px; padding: 8px 12px; }
+#export-box .status.ok   { color: var(--accent); border-color: var(--accent); }
+#export-box .status.warn { color: var(--ink-2); border-color: var(--hair-2); }

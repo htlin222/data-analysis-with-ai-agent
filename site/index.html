@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="zh-TW">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>用終端機與 AI 做臨床資料分析 · 兩小時課程</title>
+<link rel="stylesheet" href="assets/base.css?v=1788102127">
+<style>
+  .home { position: absolute; inset: 0; padding: 74px 78px 64px; display: flex; flex-direction: column; }
+  .home header { flex: 0 0 auto; }
+  .home .kicker { font-family: var(--mono); font-size: 12px; letter-spacing: .14em;
+                  text-transform: uppercase; color: var(--accent); }
+  .home h1 { font-size: 46px; line-height: 1.12; font-weight: 600; letter-spacing: -.025em;
+             margin: 16px 0 14px; max-width: 20ch; }
+  .home .sub { font-size: 17px; line-height: 1.6; color: var(--ink-2); max-width: 56ch; margin: 0; }
+
+  .cards { flex: 1 1 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 20px;
+           align-content: center; margin: 0 0 8px; }
+  .card { display: block; position: relative; padding: 30px 32px 26px;
+          border: 1px solid var(--hair); border-radius: 12px; background: var(--panel);
+          transition: border-color .18s, background .18s, transform .18s; }
+  .card:hover { border-color: var(--hair-2); background: var(--panel-2); transform: translateY(-2px); }
+  .card:hover .go { color: var(--accent); }
+  .card .n { font-family: var(--mono); font-size: 11px; color: var(--ink-3); letter-spacing: .1em; }
+  .card h2 { font-size: 26px; font-weight: 600; letter-spacing: -.015em; margin: 12px 0 10px; }
+  .card p { font-size: 13px; line-height: 1.65; color: var(--ink-2); margin: 0 0 20px; }
+  .card .meta { display: flex; align-items: center; gap: 10px; font-family: var(--mono);
+                font-size: 11px; color: var(--ink-3); }
+  .card .resume { color: var(--accent); }
+  .card .go { position: absolute; right: 24px; bottom: 22px; font-size: 18px;
+              color: var(--ink-3); transition: color .18s; }
+  .card .bar { height: 2px; background: var(--hair); border-radius: 2px; margin-bottom: 14px; overflow: hidden; }
+  .card .bar i { display: block; height: 100%; width: 0; background: var(--accent); }
+
+  .home footer { flex: 0 0 auto; display: flex; justify-content: space-between;
+                 align-items: flex-end; font-size: 12px; color: var(--ink-3);
+                 border-top: 1px solid var(--hair); padding-top: 16px; }
+  .home footer .reset { font-family: var(--mono); cursor: pointer; border: 0; background: none;
+                        color: var(--ink-3); font-size: 11px; padding: 0; }
+  .home footer .reset:hover { color: var(--accent); }
+  .flow { display: flex; align-items: center; gap: 7px; font-family: var(--mono);
+          font-size: 10.5px; color: var(--ink-3); flex-wrap: wrap; }
+  .flow span.s { color: var(--ink-2); }
+  .flow span.a { color: var(--hair-2); }
+</style>
+</head>
+<body>
+<div class="stage-wrap">
+  <div class="stage" id="stage">
+    <div class="home">
+      <header>
+        <div class="kicker">兩小時 · shell · Claude Code · R</div>
+        <h1>用終端機與 AI<br>做臨床資料分析</h1>
+        <p class="sub">範圍自 <code>pwd</code> 至 Kaplan–Meier 與 forest plot。所有數值取自 <code>scripts/</code> 的實際執行輸出。</p>
+      </header>
+
+      <div class="cards">
+        <a class="card" href="slides/" id="c-slides">
+          <div class="n">01</div>
+          <h2>投影片</h2>
+          <p>指令分組、處理決定的依據、輸出的判讀範圍。</p>
+          <div class="bar"><i id="b-slides"></i></div>
+          <div class="meta"><span id="m-slides">33 張</span></div>
+          <div class="go">→</div>
+        </a>
+
+
+        <a class="card" href="cast/" id="c-cast">
+          <div class="n">02</div>
+          <h2>終端機錄影</h2>
+          <p>asciinema 實錄。播放在每個指令輸入前暫停。</p>
+          <div class="bar"><i id="b-cast"></i></div>
+          <div class="meta"><span id="m-cast">6 段</span></div>
+          <div class="go">→</div>
+        </a>
+      </div>
+
+      <footer>
+        <div class="flow">
+          <span class="s">原始資料</span><span class="a">→</span>
+          <span class="s">檢查</span><span class="a">→</span>
+          <span class="s">分析資料集</span><span class="a">→</span>
+          <span class="s">描述性</span><span class="a">→</span>
+          <span class="s">Table 1</span><span class="a">→</span>
+          <span class="s">存活</span><span class="a">→</span>
+          <span class="s">次族群</span>
+        </div>
+        <button class="reset" id="reset">清除觀看進度</button>
+      </footer>
+    </div>
+  </div>
+</div>
+
+<script src="assets/stage.js?v=1788102127"></script>
+<script src="assets/slides.js?v=1788102127"></script>
+<script src="assets/casts.js?v=1788102127"></script>
+<script>
+(function () {
+  Stage.fit(document.getElementById("stage"));
+
+  var TOTAL = {
+    slides: (window.SLIDES && SLIDES.length) || 0,
+    cast:   (window.CASTS && CASTS.length) || 0
+  };
+  var LABEL = { slides: "張", cast: "段" };
+
+  function paint(key) {
+    var p = Stage.Progress(key).read();
+    var total = TOTAL[key];
+    document.getElementById("m-" + key).textContent = total + " " + LABEL[key];
+    if (!p || total === 0) return;
+    var pct = Math.min(100, ((p.i + 1) / total) * 100);
+    document.getElementById("b-" + key).style.width = pct.toFixed(1) + "%";
+    var where = key === "slides"
+      ? "第 " + (p.i + 1) + " 張"
+      : ((CASTS && CASTS[p.i]) ? CASTS[p.i].id : "第 " + (p.i + 1) + " 段");
+    document.getElementById("m-" + key).innerHTML =
+      total + " " + LABEL[key] +
+      ' <span class="resume">· 續看 ' + where + '（' + Stage.ago(p.t) + '）</span>';
+  }
+  paint("slides"); paint("cast");
+
+  document.getElementById("reset").addEventListener("click", function (e) {
+    e.preventDefault();
+    Stage.Progress("slides").clear();
+    Stage.Progress("cast").clear();
+    location.reload();
+  });
+
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "1") location.href = "slides/";
+    if (e.key === "2") location.href = "cast/";
+  });
+})();
+</script>
+</body>
+</html>

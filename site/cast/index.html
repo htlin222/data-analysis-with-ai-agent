@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="zh-TW">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>終端機錄影 · 用終端機與 AI 做臨床資料分析</title>
+<link rel="stylesheet" href="../assets/base.css?v=1788102127">
+<link rel="stylesheet" href="../assets/vendor/asciinema-player.css">
+<link rel="stylesheet" href="../assets/cast.css?v=1788102127">
+</head>
+<body class="full">
+<div class="rec" id="rec">
+  <div id="player"></div>
+
+  <!-- 上：段落標題 -->
+  <div class="ov ov-top" id="ov-top">
+    <div class="panel">
+      <a class="back" href="../">←</a>
+      <h2 id="seg-title">—</h2>
+      <span class="meta" id="seg-meta"></span>
+      <p class="note" id="seg-note"></p>
+      <span class="pos" id="counter"></span>
+    </div>
+  </div>
+
+  <!-- 左：段落軌 -->
+  <nav class="ov ov-left" id="ov-left">
+    <div class="panel">
+      <div class="rail-h">六段錄影</div>
+      <div id="rail"></div>
+      <div class="rail-foot">→ 繼續播放<br>↓ ↑ 換段<br>Esc 回首頁</div>
+    </div>
+  </nav>
+
+  <!-- 右：輸入點 -->
+  <aside class="ov ov-right" id="ov-right">
+    <div class="panel">
+      <div class="rail-h" id="marks-h"></div>
+      <ol id="marks"></ol>
+    </div>
+  </aside>
+
+  <div class="ov ov-chrome on" id="ov-chrome">
+    <div class="chrome progress"><div class="fill" id="fill"></div></div>
+  </div>
+</div>
+
+<script src="../assets/vendor/asciinema-player.min.js"></script>
+<script src="../assets/stage.js?v=1788102127"></script>
+<script src="../assets/casts.js?v=1788102127"></script>
+<script src="../assets/cast.js?v=1788102127"></script>
+</body>
+</html>

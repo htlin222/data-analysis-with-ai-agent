@@ -1,0 +1,122 @@
+/* cast.css — 真實錄影播放頁
+   播放器撐滿整個視窗（不套 16:9 舞台）；
+   上／左／右三層說明預設隱藏，滑鼠靠近該側邊緣才浮現。 */
+
+body.full { overflow: hidden; }
+
+.rec { position: fixed; inset: 0; background: #0e0e10;
+       --side-bottom: 56px; }
+
+/* ---------- 播放器：撐滿視窗 ---------- */
+#player { position: absolute; inset: 0; }
+#player .asciinema-player-theme-dawa {
+  --term-color-background: #0e0e10;
+  --term-color-foreground: #b8b5b0;
+  --term-color-0: #2a2a2f; --term-color-1: #d97757; --term-color-2: #9aa88f;
+  --term-color-3: #c9a227; --term-color-4: #7b8794; --term-color-5: #a58fa8;
+  --term-color-6: #8fa8a5; --term-color-7: #cfccc7;
+  --term-color-8: #4a4a52; --term-color-9: #e08a6c; --term-color-10: #adbaa2;
+  --term-color-11: #dcb84a; --term-color-12: #94a0ad; --term-color-13: #b8a3bb;
+  --term-color-14: #a5bab7; --term-color-15: #eceae7;
+}
+#player .ap-wrapper { height: 100%; }
+
+/* ---------- 三層說明：預設隱藏 ---------- */
+.ov {
+  position: absolute; z-index: 30;
+  opacity: 0; pointer-events: none;
+  transition: opacity .22s ease, transform .22s ease;
+}
+.ov.on { opacity: 1; pointer-events: auto; }
+
+.panel {
+  background: rgba(14,14,16,.88);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--hair);
+}
+
+/* 上：段落標題 */
+.ov-top { left: 0; right: 0; top: 0; z-index: 34; transform: translateY(-6px); }
+.ov-top.on { transform: none; }
+.ov-top .panel {
+  border-left: 0; border-right: 0; border-top: 0;
+  padding: 13px 26px 12px 20px;
+  display: flex; align-items: baseline; gap: 16px;
+}
+.ov-top .back {
+  font-size: 15px; color: var(--ink-3); line-height: 1;
+  padding: 2px 10px 2px 0; margin-right: 2px;
+  border-right: 1px solid var(--hair); transition: color .15s;
+}
+.ov-top .back:hover { color: var(--accent); }
+.ov-top h2 { margin: 0; font-size: 16px; font-weight: 600; white-space: nowrap; }
+.ov-top .meta { font-family: var(--mono); font-size: 11px; color: var(--ink-3); white-space: nowrap; }
+.ov-top .note { font-size: 12.5px; color: var(--ink-2); margin: 0;
+                overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ov-top .pos { margin-left: auto; font-family: var(--mono); font-size: 11px;
+               color: var(--ink-3); white-space: nowrap; }
+.ov-top .pos b { color: var(--accent); font-weight: 500; }
+
+/* 側欄共用 */
+.rail-h { font-family: var(--mono); font-size: 10px; letter-spacing: .16em;
+          text-transform: uppercase; color: var(--ink-3); padding: 0 20px 12px; }
+
+/* 左：段落軌 */
+.ov-left { left: 0; top: 0; bottom: var(--side-bottom); width: 212px; z-index: 32; transform: translateX(-8px); }
+.ov-left.on { transform: none; }
+.ov-left .panel {
+  height: 100%; border-top: 0; border-left: 0;
+  padding: 60px 0 16px; display: flex; flex-direction: column;
+}
+.seg { display: block; width: 100%; text-align: left; background: none; border: 0;
+       padding: 10px 20px; cursor: pointer; border-left: 2px solid transparent;
+       transition: background .15s, border-color .15s; }
+.seg:hover { background: rgba(255,255,255,.04); }
+.seg .n { font-family: var(--mono); font-size: 10px; color: var(--ink-3); }
+.seg .t { font-size: 13px; color: var(--ink-2); margin-top: 2px; }
+.seg .k { font-family: var(--mono); font-size: 9.5px; color: var(--ink-3); margin-top: 2px; }
+.seg.on { border-left-color: var(--accent); background: rgba(255,255,255,.05); }
+.seg.on .t { color: var(--ink); }
+.seg.on .n { color: var(--accent); }
+.seg.done .n::after { content: " ✓"; color: var(--ink-3); }
+.rail-foot { margin-top: auto; padding: 12px 20px 0; font-family: var(--mono);
+             font-size: 10px; color: var(--ink-3); line-height: 1.9;
+             border-top: 1px solid var(--hair); }
+
+/* 右：輸入點 */
+.ov-right { right: 0; top: 0; bottom: var(--side-bottom); width: 320px; z-index: 33; transform: translateX(8px); }
+.ov-right.on { transform: none; }
+.ov-right .panel {
+  height: 100%; border-top: 0; border-right: 0;
+  padding: 60px 0 16px; display: flex; flex-direction: column;
+}
+.ov-right .rail-h { line-height: 1.7; padding-right: 24px; }
+.ov-right ol {
+  list-style: none; margin: 0; padding: 0;
+  overflow-y: auto; flex: 1;
+}
+.ov-right ol::-webkit-scrollbar { width: 6px; }
+.ov-right ol::-webkit-scrollbar-thumb { background: var(--hair-2); border-radius: 3px; }
+.ov-right li {
+  display: flex; gap: 12px; align-items: baseline;
+  padding: 9px 20px; cursor: pointer;
+  border-left: 2px solid transparent;
+  font-size: 12.5px; line-height: 1.5; color: var(--ink-2);
+  transition: background .15s, border-color .15s, color .15s;
+}
+.ov-right li:hover { background: rgba(255,255,255,.04); color: var(--ink); }
+.ov-right li .t { font-family: var(--mono); font-size: 10.5px; color: var(--ink-3);
+                  min-width: 40px; flex: 0 0 auto; }
+.ov-right li.on { border-left-color: var(--accent); background: rgba(255,255,255,.05);
+                  color: var(--accent); }
+.ov-right li.on .t { color: var(--accent); }
+.ov-right li.done { opacity: .45; }
+
+/* 整體進度 */
+.ov-chrome { left: 0; right: 0; bottom: 0; height: 2px; }
+.ov-chrome .progress { position: absolute; left: 0; right: 0; bottom: 0; }
+
+.missing { position: absolute; inset: 0; display: grid; place-items: center;
+           font-family: var(--mono); font-size: 12.5px; color: var(--ink-3);
+           text-align: center; line-height: 2; }
+.missing code { color: var(--accent); }

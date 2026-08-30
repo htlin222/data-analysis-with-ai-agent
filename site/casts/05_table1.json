@@ -1,0 +1,23 @@
+{
+  "id": "05_table1",
+  "title": "描述性與 Table 1",
+  "time": "1:15 – 1:40",
+  "note": "缺失值、單變項分布、gtsummary Table 1。",
+  "markers": [
+    {
+      "cmd": "Rscript scripts/02_describe.R",
+      "label": "執行描述性腳本",
+      "at": 2.105
+    },
+    {
+      "cmd": "ls -lh output/",
+      "label": "確認產出檔案",
+      "at": 21.075
+    },
+    {
+      "cmd": "head -4 output/table1.csv",
+      "label": "Table 1 的 CSV 版本",
+      "at": 25.235
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+# 產出可以隨時重生，不進版控。開頭的斜線限定只忽略根目錄下的同名資料夾，
+# 否則 site/assets/figs/ 也會被一起忽略，投影片的圖就沒了。
+/output/
+/figs/
+/Rplots.pdf
+.Rhistory
+.RData
+.DS_Store
+__pycache__/
+*.pyc
+.rec_bashrc
+*.cast.part

@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="zh-TW">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>投影片 · 用終端機與 AI 做臨床資料分析</title>
+<link rel="stylesheet" href="../assets/base.css?v=1788102127">
+<link rel="stylesheet" href="../assets/deck.css?v=1788102127">
+<style>
+  #toast { position: absolute; left: 50%; top: 22px; transform: translateX(-50%) translateY(-10px);
+           z-index: 50; font-size: 12px; font-family: var(--mono); color: var(--ink-2);
+           background: var(--panel); border: 1px solid var(--hair-2); border-radius: 999px;
+           padding: 6px 15px; opacity: 0; transition: opacity .3s, transform .3s; pointer-events: none; }
+  #toast.on { opacity: 1; transform: translateX(-50%) translateY(0); }
+  .counter .sep { color: var(--hair-2); margin: 0 8px; }
+  #act { color: var(--ink-3); }
+</style>
+</head>
+<body>
+<div class="stage-wrap">
+  <div class="stage" id="stage">
+    <div id="deck"></div>
+
+    <a class="chrome home-link" href="../">← 回首頁</a>
+    <div class="chrome counter"><span id="act"></span><span class="sep">|</span><span id="counter">01 / 33</span></div>
+    <div id="toast"></div>
+    <div id="edit-badge"></div>
+
+    <div id="export-box">
+      <h3>存檔</h3>
+      <div class="status"></div>
+      <p>內容已複製到剪貼簿。貼進 <code>site/assets/overrides.js</code> 的 <code>slides</code> 物件即可定版，
+         不需修改 slides.js。</p>
+      <textarea spellcheck="false"></textarea>
+      <div class="row">
+        <button data-act="close">關閉</button>
+        <button data-act="reset">清除所有修改</button>
+      </div>
+    </div>
+
+    <div class="chrome hint">
+      <kbd>→</kbd> 下一步 <kbd>↓</kbd> 下一張 <kbd>E</kbd> 編輯 <kbd>F</kbd> 全螢幕 <kbd>Esc</kbd> 回首頁
+    </div>
+    <div class="chrome progress"><div class="fill" id="fill"></div></div>
+  </div>
+</div>
+
+<script src="../assets/stage.js?v=1788102127"></script>
+<script src="../assets/slides.js?v=1788102127"></script>
+<script src="../assets/overrides.js?v=1788102127"></script>
+<script src="../assets/edit.js?v=1788102127"></script>
+<script src="../assets/deck.js?v=1788102127"></script>
+</body>
+</html>

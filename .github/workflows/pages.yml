@@ -1,0 +1,55 @@
+# 推到 main 就把 site/ 部署到 GitHub Pages。
+#
+# site/ 是純靜態檔案，沒有建置步驟——投影片、錄影與圖檔都已在版控裡。
+# 唯一的加工是把 assets 的快取破解參數對齊到當次 commit，
+# 否則瀏覽器會拿到舊的 JS/CSS。
+name: Deploy site to Pages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'site/**'
+      - 'scripts/check_site.py'
+      - '.github/workflows/pages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# 同時只跑一個部署；排隊中的舊 run 直接取消。
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      # 缺圖或缺 .cast 在瀏覽器上只是靜靜地不顯示，要在部署前擋下來
+      - name: 檢查資產引用完整性
+        run: python3 scripts/check_site.py
+
+      # 分隔符用 # 而不是 |，否則 (js|css) 的交替會被當成跳脫的分隔符
+      - name: 對齊快取破解參數
+        run: |
+          v=${GITHUB_SHA::8}
+          for f in site/index.html site/slides/index.html site/cast/index.html; do
+            sed -i -E "s#(assets/[a-z]+\.(js|css))(\?v=[0-9a-f]+)?\"#\1?v=$v\"#g" "$f"
+          done
+          echo "版本參數 = $v"
+          grep -o 'assets/[a-z]*\.\(js\|css\)?v=[0-9a-f]*' site/slides/index.html | head -3
+
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+      - id: deploy
+        uses: actions/deploy-pages@v4

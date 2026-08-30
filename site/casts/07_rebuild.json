@@ -1,0 +1,33 @@
+{
+  "id": "07_rebuild",
+  "title": "刪除後重建",
+  "time": "2:05 – 2:10",
+  "note": "刪除全部產出，以三個指令重建。",
+  "markers": [
+    {
+      "cmd": "ls",
+      "label": "重建前的目錄",
+      "at": 2.225
+    },
+    {
+      "cmd": "rm -rf output figs",
+      "label": "刪除全部產出",
+      "at": 4.696
+    },
+    {
+      "cmd": "ls",
+      "label": "output/ 與 figs/ 已不存在",
+      "at": 7.683
+    },
+    {
+      "cmd": "time (Rscript scripts/01_clean.R > /dev/null 2>&1 && Rscript scripts/02_describe.R > /dev/null 2>&1 && Rscript scripts/03_survival.R > /dev/null 2>&1)",
+      "label": "三個指令重建全部產出",
+      "at": 11.649
+    },
+    {
+      "cmd": "ls output figs",
+      "label": "產出已全部回復",
+      "at": 40.249
+    }
+  ]
+}

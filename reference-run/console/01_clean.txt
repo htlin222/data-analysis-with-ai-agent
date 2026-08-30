@@ -1,0 +1,32 @@
+Warning message:
+package ‘ggplot2’ was built under R version 4.5.2 
+== 讀入 ==
+  patient_data_for_survival.csv : 100 列 x 7 欄
+  patient_data.csv              : 100 列 x 5 欄
+
+== 檢查一：唯一鍵 ==
+  surv 重複 id : 0
+  los  重複 id : 0
+  同 id 年齡吻合 : 4 / 100
+  !! 兩份檔案的 patient_id 指向不同的人，不可 join。分開處理。
+
+== 檢查二：類別編碼 ==
+  surv$treatment : Drug_A / Drug_B 
+  los$treatment  : A / B 
+  surv$stage     : I / II / III / IV 
+
+== 檢查三：缺失與範圍 ==
+  缺失值 : patient_id=0  treatment=0  age=0  gender=0  stage=0  time=0  status=0 
+  age    : 31 - 81
+  time   : 0.5 - 36.0 個月
+  邏輯檢查通過：time 皆為正、status 僅 0/1
+
+== 產出 ==
+  output/cohort_clean.csv : 100 列 x 9 欄
+  output/los_clean.csv    : 100 列 x 5 欄
+
+分組後人數：
+        
+         early advanced
+  Drug_A    27       25
+  Drug_B    22       26

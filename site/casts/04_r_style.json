@@ -1,0 +1,28 @@
+{
+  "id": "04_r_style",
+  "title": "R 語言紀律",
+  "time": "1:05 – 1:15",
+  "note": "編號檔名、here()、禁用寫法的檢查。",
+  "markers": [
+    {
+      "cmd": "ls scripts/",
+      "label": "編號檔名即執行順序",
+      "at": 2.488
+    },
+    {
+      "cmd": "grep -n 'here(' scripts/01_clean.R | head -5",
+      "label": "here() 取代 setwd()",
+      "at": 5.749
+    },
+    {
+      "cmd": "grep -n 'setwd\\|rm(list' scripts/*.R",
+      "label": "檢查禁用寫法：無輸出即通過",
+      "at": 11.857
+    },
+    {
+      "cmd": "make check",
+      "label": "把該檢查納入 Makefile",
+      "at": 17.618
+    }
+  ]
+}

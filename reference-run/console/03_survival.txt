@@ -1,0 +1,43 @@
+== 整體存活 ==
+  病人數       : 100
+  死亡 (event) : 69
+  設限 (censor): 31
+  中位追蹤時間 : 36.0 個月（reverse KM）
+  EPV 上限     : 69 events 大約撐得起 6 個共變項
+  中位存活     : 17.5 個月
+
+== KM by stage ==
+Call: survfit(formula = Surv(time, status) ~ stage_group, data = cohort)
+
+                      n events median 0.95LCL 0.95UCL
+stage_group=advanced 51     44   10.6     8.7    22.2
+stage_group=early    49     25   28.3    15.5      NA
+  log-rank p = 0.0003947
+
+== KM by treatment ==
+Call: survfit(formula = Surv(time, status) ~ treatment, data = cohort)
+
+                  n events median 0.95LCL 0.95UCL
+treatment=Drug_A 52     36   17.5    12.1    27.9
+treatment=Drug_B 48     33   17.7     9.0    32.2
+  log-rank p = 0.8319
+
+== Cox model ==
+             term    HR    95% CI        p
+              age 1.035 1.01-1.06 0.001140
+            sex男 1.053 0.63-1.76 0.844000
+ stage_groupearly 0.388 0.23-0.64 0.000242
+  treatmentDrug_B 0.890 0.53-1.49 0.657000
+
+== 次族群（stage advanced vs early，依年齡分層）==
+ age_group  n events   HR   lo   hi       p
+       <60 62     37 0.28 0.14 0.58 0.00066
+      >=60 38     32 0.55 0.26 1.14 0.10700
+  interaction p = 0.219
+
+== 產出 ==
+  figs/km_by_stage.png
+  figs/km_by_treatment.png
+  figs/forest_subgroup.png
+  output/cox.csv
+  output/subgroup.csv
