@@ -1,0 +1,43 @@
+{
+  "id": "03_analysis",
+  "title": "跑分析",
+  "time": "0:40 – 1:15",
+  "note": "清洗、Table 1、KM、Cox、次族群。數字先出來，圖再出來。",
+  "markers": [
+    {
+      "cmd": "Rscript scripts/01_clean.R",
+      "label": "清洗：注意 4 筆缺失與 25 筆行政設限",
+      "at": 2.542
+    },
+    {
+      "cmd": "Rscript scripts/02_describe.R",
+      "label": "描述性與 Table 1",
+      "at": 23.486
+    },
+    {
+      "cmd": "head -3 output/table1.csv",
+      "label": "Table 1 的 N 是 96，不是 100",
+      "at": 44.59
+    },
+    {
+      "cmd": "Rscript scripts/03_survival.R",
+      "label": "存活分析：先數值，後繪圖",
+      "at": 51.528
+    },
+    {
+      "cmd": "cat output/cox.csv",
+      "label": "Cox 的 HR 與區間",
+      "at": 79.228
+    },
+    {
+      "cmd": "cat output/subgroup.csv",
+      "label": "次族群：該看 interaction p",
+      "at": 84.118
+    },
+    {
+      "cmd": "ls figs/",
+      "label": "圖已產生，另開視窗看",
+      "at": 89.387
+    }
+  ]
+}

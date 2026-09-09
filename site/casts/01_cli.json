@@ -1,68 +1,63 @@
 {
   "id": "01_cli",
-  "title": "CLI 基本功",
-  "time": "0:08 – 0:35",
-  "note": "定位、檢視、建立目錄結構。九個指令。",
+  "title": "終端機七個指令",
+  "time": "0:08 – 0:22",
+  "note": "我在哪、這裡有什麼、看檔案、搭架子。",
   "markers": [
     {
       "cmd": "pwd",
-      "label": "pwd — 目前所在目錄",
-      "at": 2.315
+      "label": "pwd — 我在哪",
+      "at": 2.508
     },
     {
       "cmd": "ls",
-      "label": "ls — 列出目錄內容",
-      "at": 4.412
-    },
-    {
-      "cmd": "ls -lh raw/",
-      "label": "ls -lh — 權限與大小",
-      "at": 6.665
+      "label": "ls — 這裡有什麼",
+      "at": 4.979
     },
     {
       "cmd": "cd raw",
-      "label": "cd — 進入子目錄",
-      "at": 11.747
+      "label": "cd — 進去 raw",
+      "at": 8.678
     },
     {
       "cmd": "pwd",
-      "label": "確認位置已改變",
-      "at": 13.615
+      "label": "位置真的變了",
+      "at": 10.635
     },
     {
       "cmd": "cd ..",
-      "label": "cd .. — 回上一層",
-      "at": 15.814
+      "label": "cd .. — 退回上一層",
+      "at": 12.972
     },
     {
       "cmd": "pwd",
-      "label": "確認回到專案根目錄",
-      "at": 17.844
+      "label": "回到專案根目錄",
+      "at": 14.852
     },
     {
-      "cmd": "head -5 raw/patient_data_for_survival.csv",
-      "label": "head -5 — 檔案開頭與欄位名",
-      "at": 21.496
+      "cmd": "head -3 raw/cohort.csv",
+      "label": "head -3 — 看前三行與欄位名",
+      "at": 18.796
     },
     {
-      "cmd": "tail -3 raw/patient_data_for_survival.csv",
-      "label": "tail -3 — 檔案結尾",
-      "at": 28.573
-    },
-    {
-      "cmd": "wc -l raw/*.csv",
-      "label": "wc -l — 行數，不等於個案數",
-      "at": 34.698
+      "cmd": "tail -3 raw/cohort.csv",
+      "label": "tail -3 — 看最後三行",
+      "at": 23.597
     },
     {
       "cmd": "cat raw/README.txt",
-      "label": "cat — 輸出整份檔案",
-      "at": 40.615
+      "label": "cat — 讀完整份說明",
+      "at": 28.226
     },
     {
-      "cmd": "tree -L 1",
-      "label": "tree — 目錄結構",
-      "at": 46.461
+      "cmd": "mkdir -p /tmp/demo/{raw,scripts,output,figs,docs}",
+      "label": "mkdir -p — 一次搭好五個資料夾",
+      "at": 35.174
+    },
+    {
+      "cmd": "tree /tmp/demo",
+      "label": "tree — 確認架子搭好了",
+      "at": 39.081
     }
   ]
 }

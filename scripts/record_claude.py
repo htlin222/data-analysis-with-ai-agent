@@ -43,6 +43,14 @@ import time
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 OUT = ROOT / "site" / "casts"
 WORK = pathlib.Path(os.environ.get("TMPDIR", "/tmp")) / "dawa-claude-demo"
+# 錄製用的獨立設定目錄。不使用操作者本人的 ~/.claude：
+#   1. 全域 hooks（SessionStart 等）會在畫面上留下與課程無關的訊息，
+#      而且 SessionStart 的輸出來得比輸入框就緒晚，那次重繪會把已經
+#      打進去的提示詞清掉——前兩輪被吃掉就是這樣來的。
+#   2. statusLine 會把模型名稱、額度、時間一路錄進公開教材。
+#   3. 全域 CLAUDE.md 會讓 session 的行為與學員的預設環境不同。
+# 只帶入登入憑證，其餘一律從乾淨狀態開始。
+CONFIG = pathlib.Path(os.environ.get("TMPDIR", "/tmp")) / "dawa-claude-config"
 
 COLS, ROWS = 100, 30
 IDLE_CAP = 2.0  # 靜止超過這個秒數就壓縮，避免等待時畫面空轉
@@ -57,41 +65,42 @@ CHUNK, CHUNK_DELAY = 6, 0.09  # 逐塊送出，模擬打字節奏
 
 SEG = {
     "id": "02_claude",
-    "title": "Claude Code",
-    "time": "0:35 – 1:05",
-    "note": "從觀察資料夾到寫出 01_clean.R。工作目錄只有 raw/，"
-    "其餘檔案由這段 session 產生。",
+    "title": "交給 Claude Code",
+    "time": "0:22 – 0:40",
+    "note": "從看資料夾到寫出 01_clean.R。工作目錄只有 raw/cohort.csv，"
+    "其餘檔案都由這段 session 產生。",
 }
 
 PROMPTS = [
-    ("請看一下這個資料夾，告訴我裡面有什麼。", "第一個提示詞：先讓它看，不下指令"),
+    ("請看一下這個資料夾，告訴我裡面有什麼。", "先讓它看，還不下指令"),
     (
-        "先不要做任何修改。請讀 raw/ 底下的兩份主要 CSV，"
-        "用中文列出你發現的所有資料品質問題，"
-        "每一項告訴我：問題是什麼、影響幾筆、你建議怎麼處理。",
-        "「先不要做任何修改」：診斷與處置分開",
+        "讀 raw/cohort.csv，用中文告訴我這份資料長什麼樣："
+        "幾個人、幾個欄位、有沒有缺失、追蹤時間到哪裡。先不要做任何修改。",
+        "先看清楚資料，還是不要它動手",
     ),
     (
-        "好，我們一項一項來。這兩份檔案的 patient_id 都是 1 到 100，"
-        "請告訴我它們是不是同一批病人。先列證據給我看，不要自己合併。",
-        "逐項處理：先驗證 patient_id",
+        "我要做存活分析。在你動手之前，先告訴我三件事你打算怎麼做："
+        "age 的缺失怎麼處理、stage 怎麼分成 early 和 advanced、"
+        "年齡要切在幾歲。請直接用文字說明，不要給我選單。",
+        "三個決定：讓它先說，不要讓它自己選",
     ),
     (
-        "接下來處理分期。但在你動手之前，請告訴我你打算怎麼把 stage "
-        "分成 early 和 advanced，以及你用什麼理由選這個切點。",
-        "切點：在動作之前先取得說明",
-    ),
-    (
-        "就用 I/II vs III/IV。把清洗步驟寫成 scripts/01_clean.R，"
-        "要求使用 here::here() 不要用 setwd()，不要 rm(list=ls())。"
-        "另外把所有決定寫成 docs/cleaning_log.md，"
+        "缺失不要補值，讓模型自己排除。stage 用 I/II vs III/IV。年齡切 60。"
+        "把清洗寫成 scripts/01_clean.R，要用 here::here() 不要用 setwd()，"
+        "也不要 rm(list=ls())。所有決定寫成 docs/cleaning_log.md，"
         "清洗後的資料存成 output/cohort_clean.csv。",
-        "核可後才動手：寫腳本與處理紀錄",
+        "你決定完了，才輪到它動手",
     ),
     ("執行 scripts/01_clean.R，把輸出貼給我看。", "執行並確認產出"),
 ]
 
 ANSI = re.compile(r"\x1b\[[0-9;?]*[a-zA-Z]|\x1b\][^\x07]*\x07|\x1b[()][B0]")
+# 模型跑完一個回合的證據。措辭每次不同：spinner 的 token 計數
+# 「(2m 5s · ↓ 8.6k tokens)」，或完成標記「Cogitated for 45s · done」。
+# 只認 "tokens"：spinner 一定會印 token 計數，而它前後的措辭與空白
+# 會被 TUI 依欄寬切開（見過 "tokens ·"、"↓340 tokens)"、"for 19 · done"），
+# 比對越長的片段就越容易漏。
+ANSWERED = re.compile(r"tokens")
 ASK_PERMISSION = re.compile(r"Do you want|❯\s*1\.\s*Yes|1\.\s*Yes")
 # 工作目錄每次重建，第一次啟動會問是否信任這個資料夾。
 # 預設反白在「No」，若不處理，第一個提示詞會被打進這個對話框。
@@ -178,32 +187,73 @@ def stage_workspace():
     )
 
 
-def trust_workspace() -> None:
-    """事先把工作目錄標成已信任。
+def stage_config() -> None:
+    """建立錄製專用的設定目錄。
 
-    stage_workspace() 每次都砍掉重建，所以每次啟動都會跳出信任對話框。
-    那個對話框擋在最前面，會把隨啟動送出的第一個提示詞一起吃掉。
-    這裡做的事等同於人按下「Yes, I trust this folder」，
-    只改一個布林值，而且只針對這支腳本自己建立的暫存目錄。
+    帶入登入狀態（憑證與 ~/.claude.json 的帳號欄位），但不帶入
+    hooks、statusLine 與全域 CLAUDE.md——那三者會把操作者的個人環境
+    錄進公開教材，而且 SessionStart 的輸出比輸入框就緒晚，
+    那次重繪會把已經打進去的提示詞清掉。
     """
-    cfg = pathlib.Path.home() / ".claude.json"
-    if not cfg.exists():
-        return
-    backup = cfg.with_suffix(f".json.bak-{int(time.time())}")
-    raw = cfg.read_text()
-    backup.write_text(raw)
+    if CONFIG.exists():
+        shutil.rmtree(CONFIG)
+    CONFIG.mkdir(parents=True)
 
-    data = json.loads(raw)
-    entry = data.setdefault("projects", {}).setdefault(str(WORK), {})
-    if entry.get("hasTrustDialogAccepted") is True:
-        backup.unlink(missing_ok=True)
-        return
-    entry["hasTrustDialogAccepted"] = True
+    # 登入狀態綁在設定目錄上：換了 CLAUDE_CONFIG_DIR 就會變成未登入，
+    # 而 Keychain 的讀取也跟著失效。從 Keychain 取出有效憑證寫進來，
+    # 只帶登入用的那一份，MCP 的授權不需要也不該散布。
+    # ~/.claude/.credentials.json 不用——那份可能是舊的，一旦存在會被優先採用。
+    cred = subprocess.run(
+        ["security", "find-generic-password", "-s", "Claude Code-credentials", "-w"],
+        capture_output=True, text=True)
+    if cred.returncode == 0:
+        try:
+            oauth = json.loads(cred.stdout).get("claudeAiOauth")
+        except json.JSONDecodeError:
+            oauth = None
+        if oauth:
+            path = CONFIG / ".credentials.json"
+            path.write_text(json.dumps({"claudeAiOauth": oauth}) + "\n")
+            path.chmod(0o600)
+        else:
+            print("  註：Keychain 裡沒有 claudeAiOauth，session 可能無法登入")
+    else:
+        print("  註：讀不到 Keychain，session 可能無法登入")
 
-    tmp = cfg.with_suffix(".json.tmp")
-    tmp.write_text(json.dumps(data, ensure_ascii=False, indent=2))
-    tmp.replace(cfg)
-    print(f"  已將工作目錄標為信任（備份：{backup.name}）")
+    # 只保留與呈現有關的最小設定。language 保留，否則回答可能變英文。
+    lang = "zh-TW"
+    user_settings = pathlib.Path.home() / ".claude" / "settings.json"
+    if user_settings.exists():
+        try:
+            lang = json.loads(user_settings.read_text()).get("language", lang)
+        except (json.JSONDecodeError, OSError):
+            pass
+    (CONFIG / "settings.json").write_text(
+        json.dumps({"language": lang, "theme": "dark"},
+                   ensure_ascii=False, indent=2) + "\n"
+    )
+
+    # ~/.claude.json 同時存放登入狀態與引導進度。全新的檔案會被當成
+    # 第一次啟動（主題選擇、信任對話框），而缺少帳號欄位則會變成未登入。
+    # 因此沿用既有內容，只換掉 projects。
+    cfg = {}
+    user_cfg = pathlib.Path.home() / ".claude.json"
+    if user_cfg.exists():
+        try:
+            cfg = json.loads(user_cfg.read_text())
+        except (json.JSONDecodeError, OSError):
+            cfg = {}
+    cfg["hasCompletedOnboarding"] = True
+    # macOS 的 $TMPDIR 是 /var/... 的符號連結，claude 記的是解析後的
+    # /private/var/...，只寫其中一個會對不上，信任對話框照樣跳出來。
+    cfg["projects"] = {
+        path: {"hasTrustDialogAccepted": True}
+        for path in {str(WORK), str(WORK.resolve())}
+    }
+    (CONFIG / ".claude.json").write_text(
+        json.dumps(cfg, ensure_ascii=False, indent=2) + "\n"
+    )
+    print(f"  設定目錄：{CONFIG}（無 hooks、無 statusLine、無全域 CLAUDE.md）")
 
 
 def spawn(first_prompt: str) -> tuple[int, subprocess.Popen]:
@@ -215,6 +265,7 @@ def spawn(first_prompt: str) -> tuple[int, subprocess.Popen]:
         COLUMNS=str(COLS),
         LINES=str(ROWS),
         CLICOLOR="1",
+        CLAUDE_CONFIG_DIR=str(CONFIG),
     )
     env.pop("TMUX", None)  # 避免被誤判為在 tmux 內
     # 從外層 session 繼承的標記會讓內層停用逐字稿儲存，
@@ -324,14 +375,41 @@ def verify(cast: pathlib.Path, markers: list[dict]) -> list[str]:
 
     problems = []
     for i, m in enumerate(markers):
+        # 第一個提示詞隨啟動送出，marker 必然落在 0.0，
+        # 該區間只涵蓋 TUI 的開機畫面，不代表那一輪的回答。
+        if i == 0:
+            continue
         hi = markers[i + 1]["at"] if i + 1 < len(markers) else end
+
         text = ANSI.sub("", "".join(
             e[2] for e in ev if e[1] == "o" and m["at"] <= e[0] <= hi))
-        if "tokens ·" not in text:
+        # 判準是這一輪有沒有真的跑模型，不是它花了多久——
+        # 簡單的問題答得快是正常的，提示詞沒送出才是問題。
+        if not ANSWERED.search(text):
             problems.append(
                 f"第 {i + 1} 輪（{m['at']:.1f}s 起，長 {hi - m['at']:.1f}s）"
-                f"沒有回答：{m['label']}")
+                f"沒有回答，提示詞可能沒被送進輸入框：{m['label']}")
     return problems
+
+
+def trim_exit_notice(cast: pathlib.Path) -> None:
+    """截掉結尾的退出訊息。
+
+    錄製結束時送 Ctrl-C，claude 會印出「Resume this session with:
+    claude --resume <uuid>」。那是這次錄製的暫存 session，對課程沒有意義，
+    卻會被當成識別資訊留在公開錄影裡。
+    """
+    lines = cast.read_text().splitlines()
+    header, events = lines[0], lines[1:]
+    cut = None
+    for i, ln in enumerate(events):
+        if "Resume this session" in ln or "Press CtrlC again" in ln:
+            cut = i
+            break
+    if cut is None:
+        return
+    cast.write_text("\n".join([header, *events[:cut]]) + "\n")
+    print(f"  截掉結尾的退出訊息（{len(events) - cut} 個事件）")
 
 
 def record() -> None:
@@ -342,7 +420,7 @@ def record() -> None:
     OUT.mkdir(parents=True, exist_ok=True)
     cast.unlink(missing_ok=True)
     stage_workspace()
-    trust_workspace()
+    stage_config()
 
     first_text, first_label = PROMPTS[0]
     master, proc = spawn(first_text)
@@ -420,6 +498,14 @@ def record() -> None:
             f"保留原檔不覆蓋。未完成的錄影留在 {cast.name}"
         )
 
+    # 錄滿五輪不代表五輪都成功：提示詞若沒進輸入框，marker 一樣會被記下來。
+    # 不驗就覆蓋的話，會用一份空轉的錄影蓋掉上一份完整的。
+    if problems := verify(cast, markers):
+        for p in problems:
+            print(f"  ✗ {p}", file=sys.stderr)
+        sys.exit(f"錄影未通過驗收，保留原檔不覆蓋。這次的結果留在 {cast.name}")
+
+    trim_exit_notice(cast)
     cast.replace(final)
     (OUT / f"{SEG['id']}.json").write_text(
         json.dumps(

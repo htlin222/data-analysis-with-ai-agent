@@ -1,0 +1,33 @@
+{
+  "id": "04_rebuild",
+  "title": "刪掉重建",
+  "time": "1:25 – 1:30",
+  "note": "把產出全部刪掉，用三個指令長回來。",
+  "markers": [
+    {
+      "cmd": "ls",
+      "label": "重建前",
+      "at": 2.546
+    },
+    {
+      "cmd": "rm -rf output figs",
+      "label": "把產出全部刪掉",
+      "at": 5.241
+    },
+    {
+      "cmd": "ls",
+      "label": "output/ 與 figs/ 不見了",
+      "at": 8.577
+    },
+    {
+      "cmd": "time (Rscript scripts/01_clean.R > /dev/null 2>&1 && Rscript scripts/02_describe.R > /dev/null 2>&1 && Rscript scripts/03_survival.R > /dev/null 2>&1)",
+      "label": "三個指令，全部長回來",
+      "at": 12.88
+    },
+    {
+      "cmd": "ls output figs",
+      "label": "產出回來了。raw/ 和 scripts/ 沒動過",
+      "at": 41.668
+    }
+  ]
+}
