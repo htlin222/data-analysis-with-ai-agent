@@ -15,3 +15,13 @@ __pycache__/
 # 沒有它整個錄影頁都跑不起來。先解除目錄本身才能再解除內容。
 !site/assets/vendor/
 !site/assets/vendor/**
+
+# Cloudflare Pages 的憑證。.env.example 要留著當範本，
+# 所以 .env.* 之後必須再解除它，否則會被一起忽略。
+.env
+.env.*
+!.env.example
+.wrangler/
+
+.dev.vars*
+!.dev.vars.example

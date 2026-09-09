@@ -142,15 +142,28 @@ Claude Code 段的工作目錄是 `$TMPDIR/dawa-claude-demo`，開始時只有 `
 
 ## 部署
 
-推到 `main` 且 `site/**` 有變動時，`.github/workflows/pages.yml` 會：
+站台：<https://data-analysis-with-ai-agent.hsieh-ting-lin.workers.dev>
 
-1. 跑 `scripts/check_site.py` 檢查資產引用完整性
-2. 把 `?v=` 快取破解參數對齊當次 commit 的短 SHA
-3. 上傳 `site/` 並部署到 GitHub Pages
+```bash
+./tools/deploy.sh        # 讀 .env，把 site/ 送上去
+```
 
-站台：<https://htlin222.github.io/data-analysis-with-ai-agent/>
+憑證放在 `.env`（不進版控，範本見 `.env.example`）。本機跑過 `wrangler login`
+的話 token 可以留空，`deploy.sh` 會改用該 OAuth session。
 
-repo 是私有的，但 **Pages 站台是公開的**——私有 Pages 需要 Enterprise Cloud 方案。
+Cloudflare 已把 Pages 併入 Workers，`wrangler pages` 的指令會委派過去，
+因此設定寫在 `wrangler.jsonc`，以 Workers Static Assets 送出 `site/`——
+沒有 Worker 程式碼，只宣告要送哪個目錄。
+
+### 為什麼不是 GitHub Pages
+
+`.github/workflows/pages.yml` 仍留著，但目前不會執行：private repo 的
+GitHub Actions 分鐘數要計費，額度中斷時 job 根本不啟動（`The job was not
+started because recent account payments have failed`），推上去也不會部署。
+
+改成公開 repo 可以解決計費，但 `a5fb6a9` 的歷史裡有一份舊錄影，
+含操作者的 hooks 輸出與全域 CLAUDE.md 片段——那正是後來重錄的原因。
+公開之前要先清掉那個 blob。Cloudflare 這條路兩者都不需要。
 
 `check_site.py` 會比對 `git ls-files` 而不只是工作目錄。這很重要：
 全域 gitignore 的 `vendor/` 曾讓 `site/assets/vendor/` 的 asciinema-player

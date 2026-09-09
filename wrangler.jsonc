@@ -1,0 +1,13 @@
+// Cloudflare Workers Static Assets。Cloudflare 已把 Pages 併入 Workers，
+// wrangler 的 `pages` 指令會委派到這裡，因此直接用 Workers 的設定。
+// 站台是純靜態檔案，沒有 Worker 程式碼，只宣告要送出哪個目錄。
+{
+  "name": "data-analysis-with-ai-agent",
+  "compatibility_date": "2026-09-08",
+  "assets": {
+    "directory": "site"
+  },
+  "observability": {
+    "enabled": true
+  }
+}
