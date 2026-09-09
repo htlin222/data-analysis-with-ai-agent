@@ -8,10 +8,14 @@
   var fill    = document.getElementById("fill");
   var actEl   = document.getElementById("act");
   var toast   = document.getElementById("toast");
+  var notesEl = document.getElementById("notes");
+  var notesBd = notesEl.querySelector(".nb");
   var store   = Stage.Progress("slides");
   var editor  = Editor({ key: "slides", root: deck, scope: function () { return cur; } });
   var total   = SLIDES.length;
   var cur = 0, step = 0;
+  // 備忘稿的開關狀態跨場次記住，講者不必每次重開。
+  var notesOn = localStorage.getItem("slides.notes") === "1";
 
   /* ---- 建立所有投影片 ---- */
   SLIDES.forEach(function (s, i) {
@@ -44,6 +48,7 @@
     actEl.textContent = SLIDES[cur].act + " · " + SLIDES[cur].title;
     fill.style.width = (((cur + (m ? step / m : 1)) / total) * 100).toFixed(2) + "%";
     editor.apply(els[cur]);
+    notesBd.innerHTML = SLIDES[cur].notes || "<span style='color:var(--ink-3)'>（這張沒有備忘稿）</span>";
     if (save !== false) store.write(cur, step);
   }
 
@@ -77,6 +82,7 @@
     setTimeout(function () { toast.classList.remove("on"); }, 3200);
   }
   render(false);
+  notesEl.classList.toggle("on", notesOn);
   if (qs.has("edit")) editor.toggle(els[cur]);
 
   /* ---- 鍵盤 ---- */
@@ -101,6 +107,12 @@
 
     switch (e.key) {
       case "e": case "E": e.preventDefault(); editor.toggle(els[cur]); break;
+      case "n": case "N":
+        e.preventDefault();
+        notesOn = !notesOn;
+        notesEl.classList.toggle("on", notesOn);
+        localStorage.setItem("slides.notes", notesOn ? "1" : "0");
+        break;
       case "ArrowRight": case " ": case "PageDown": e.preventDefault(); next(); break;
       case "ArrowLeft":  case "PageUp":            e.preventDefault(); prev(); break;
       case "ArrowDown":  e.preventDefault(); go(cur + 1); break;

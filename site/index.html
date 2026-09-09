@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>用終端機與 AI 做臨床資料分析 · 兩小時課程</title>
+<title>用終端機與 AI 做臨床資料分析 · 90 分鐘</title>
 <link rel="stylesheet" href="assets/base.css?v=1788102127">
 <style>
   .home { position: absolute; inset: 0; padding: 74px 78px 64px; display: flex; flex-direction: column; }
@@ -49,18 +49,18 @@
   <div class="stage" id="stage">
     <div class="home">
       <header>
-        <div class="kicker">兩小時 · shell · Claude Code · R</div>
+        <div class="kicker">90 分鐘 · 終端機 · Claude Code · R</div>
         <h1>用終端機與 AI<br>做臨床資料分析</h1>
-        <p class="sub">範圍自 <code>pwd</code> 至 Kaplan–Meier 與 forest plot。所有數值取自 <code>scripts/</code> 的實際執行輸出。</p>
+        <p class="sub">一份 <code>cohort.csv</code>，走到 Kaplan–Meier 與 forest plot。所有數值取自 <code>scripts/</code> 的實際執行輸出。</p>
       </header>
 
       <div class="cards">
         <a class="card" href="slides/" id="c-slides">
           <div class="n">01</div>
           <h2>投影片</h2>
-          <p>指令分組、處理決定的依據、輸出的判讀範圍。</p>
+          <p>圖與數字為主。按 <kbd>N</kbd> 展開講者備忘稿。</p>
           <div class="bar"><i id="b-slides"></i></div>
-          <div class="meta"><span id="m-slides">33 張</span></div>
+          <div class="meta"><span id="m-slides">22 張</span></div>
           <div class="go">→</div>
         </a>
 
@@ -70,19 +70,17 @@
           <h2>終端機錄影</h2>
           <p>asciinema 實錄。播放在每個指令輸入前暫停。</p>
           <div class="bar"><i id="b-cast"></i></div>
-          <div class="meta"><span id="m-cast">6 段</span></div>
+          <div class="meta"><span id="m-cast">4 段</span></div>
           <div class="go">→</div>
         </a>
       </div>
 
       <footer>
         <div class="flow">
-          <span class="s">原始資料</span><span class="a">→</span>
-          <span class="s">檢查</span><span class="a">→</span>
-          <span class="s">分析資料集</span><span class="a">→</span>
-          <span class="s">描述性</span><span class="a">→</span>
+          <span class="s">cohort.csv</span><span class="a">→</span>
+          <span class="s">清洗</span><span class="a">→</span>
           <span class="s">Table 1</span><span class="a">→</span>
-          <span class="s">存活</span><span class="a">→</span>
+          <span class="s">KM · Cox</span><span class="a">→</span>
           <span class="s">次族群</span>
         </div>
         <button class="reset" id="reset">清除觀看進度</button>
