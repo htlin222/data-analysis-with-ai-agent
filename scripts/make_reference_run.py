@@ -10,12 +10,18 @@ output/ 與 figs/ 不進版控（見 .gitignore），因此 clone 之後是空�
 產出：
     reference-run/MANIFEST.tsv   全部產出的大小、形狀、sha256
     reference-run/results/       小型結果表的副本
+    reference-run/console/       三個腳本與 CLI 段的實際輸出
+
+console/ 是投影片上每一個數字的來源。手動維護必然會過時——
+資料改了、腳本改了，投影片卻還印著舊數字，而且沒有人會發現。
+因此這裡一律重跑，不複製既有檔案。
 """
 from __future__ import annotations
 
 import csv
 import hashlib
 import pathlib
+import subprocess
 import sys
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
@@ -27,6 +33,46 @@ REQUIRED = ["output/cohort_clean.csv", "output/table1.html", "figs/km_by_stage.p
 
 # 小到可以進版控，而且是最需要比對的數字
 COPY = ["cox.csv", "subgroup.csv", "table1.csv"]
+
+# 重跑並留存輸出的腳本。順序即相依順序。
+SCRIPTS = ["01_clean.R", "02_describe.R", "03_survival.R"]
+
+# CLI 段：投影片上那幾個終端機畫面的來源。與 segments.py 的 01_cli 對應。
+CLI_CMDS = [
+    "pwd",
+    "ls",
+    "head -3 raw/cohort.csv",
+    "tail -3 raw/cohort.csv",
+    "cat raw/README.txt",
+]
+
+
+def rerun() -> None:
+    """重跑三個腳本與 CLI 段，輸出存進 reference-run/console/。"""
+    con = OUT / "console"
+    con.mkdir(parents=True, exist_ok=True)
+
+    for name in SCRIPTS:
+        r = subprocess.run(["Rscript", f"scripts/{name}"], cwd=ROOT,
+                           capture_output=True, text=True)
+        if r.returncode != 0:
+            print(f"  {name} 執行失敗：\n{r.stderr}", file=sys.stderr)
+            sys.exit(1)
+        # R 的套件版本警告與投影片無關，濾掉以免每次重跑都產生雜訊 diff
+        body = "\n".join(
+            ln for ln in (r.stdout + r.stderr).splitlines()
+            if "built under R version" not in ln and ln.strip() != "Warning message:"
+        )
+        (con / f"{name.removesuffix('.R')}.txt").write_text(body.rstrip() + "\n")
+        print(f"  重跑 {name}")
+
+    lines = []
+    for c in CLI_CMDS:
+        r = subprocess.run(["bash", "-c", c], cwd=ROOT,
+                           capture_output=True, text=True)
+        lines.append(f"$ {c}\n{r.stdout.rstrip()}\n")
+    (con / "01_cli.txt").write_text("\n".join(lines))
+    print(f"  重跑 CLI 段（{len(CLI_CMDS)} 個指令）")
 
 
 def sha256(p: pathlib.Path) -> str:
@@ -47,6 +93,8 @@ def shape(p: pathlib.Path) -> str:
 
 
 def main() -> int:
+    rerun()
+
     missing = [f for f in REQUIRED if not (ROOT / f).exists()]
     if missing:
         print(f"執行不完整，缺少：{', '.join(missing)}", file=sys.stderr)

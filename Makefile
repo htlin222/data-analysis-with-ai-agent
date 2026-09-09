@@ -4,12 +4,17 @@
 RSCRIPT := Rscript
 PORT    := 8080
 
-.PHONY: all clean serve check cast cast-claude snapshot
+.PHONY: all clean serve check cast cast-claude snapshot site-figs
 
-## all: 從 raw/ 重建所有產出
-all: output/cohort_clean.csv output/table1.html figs/km_by_stage.png
+## all: 從 raw/ 重建所有產出（含同步網站用的圖）
+all: output/cohort_clean.csv output/table1.html figs/km_by_stage.png site-figs
 
-output/cohort_clean.csv: scripts/01_clean.R raw/patient_data_for_survival.csv raw/patient_data.csv
+## site-figs: 網站用的是 figs/ 的複本，重跑分析後要同步過去
+site-figs: figs/km_by_stage.png
+	@command cp figs/*.png site/assets/figs/
+	@echo "figs/ → site/assets/figs/ 已同步"
+
+output/cohort_clean.csv: scripts/01_clean.R raw/cohort.csv
 	$(RSCRIPT) scripts/01_clean.R
 
 output/table1.html: scripts/02_describe.R output/cohort_clean.csv
@@ -26,6 +31,13 @@ clean:
 check:
 	@! grep -n 'setwd\|rm(list' scripts/*.R || (echo "找到禁用寫法" && exit 1)
 	@echo "scripts/ 乾淨"
+	@python3 scripts/check_slides.py
+	@python3 scripts/check_casts.py
+	@for f in figs/*.png; do \
+	  cmp -s "$$f" "site/assets/$$f" || \
+	    (echo "site/assets/$$f 與 $$f 不同步，請跑 make site-figs" && exit 1); \
+	done
+	@echo "figs/ 與 site/assets/figs/ 同步"
 	@python3 scripts/check_site.py
 
 ## serve: 在本機預覽課程網站

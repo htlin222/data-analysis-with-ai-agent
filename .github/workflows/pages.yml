@@ -11,6 +11,9 @@ on:
     paths:
       - 'site/**'
       - 'scripts/check_site.py'
+      - 'scripts/check_slides.py'
+      - 'scripts/check_casts.py'
+      - 'reference-run/**'
       - '.github/workflows/pages.yml'
   workflow_dispatch:
 
@@ -36,6 +39,13 @@ jobs:
       # 缺圖或缺 .cast 在瀏覽器上只是靜靜地不顯示，要在部署前擋下來
       - name: 檢查資產引用完整性
         run: python3 scripts/check_site.py
+
+      # 投影片的結果數字必須回溯得到 reference-run/，
+      # 錄影則不得含操作者的個人環境
+      - name: 檢查投影片與錄影
+        run: |
+          python3 scripts/check_slides.py
+          python3 scripts/check_casts.py
 
       # 分隔符用 # 而不是 |，否則 (js|css) 的交替會被當成跳脫的分隔符
       - name: 對齊快取破解參數

@@ -1,14 +1,14 @@
 # 用終端機與 AI 做臨床資料分析
 
-兩小時課程。對象為無終端機使用經驗的臨床醫師。
-範圍自 `pwd` 至 Kaplan–Meier 與 forest plot。
+90 分鐘課程。對象為無終端機使用經驗的臨床醫師。
+一份 `raw/cohort.csv`，走到 Kaplan–Meier 與 forest plot。
 
 課程網站有三個入口：
 
 | 入口 | 內容 |
 |---|---|
-| **投影片** | 33 張。指令分組、處理決定的依據、輸出的判讀範圍。 |
-| **終端機錄影** | 6 段 asciinema 實錄，含一段完整的 Claude Code session。播放在每個輸入點暫停。 |
+| **投影片** | 22 張。圖與數字為主，論述在講者備忘稿（按 `N` 展開）。 |
+| **終端機錄影** | 4 段 asciinema 實錄，含一段完整的 Claude Code session。播放在每個輸入點暫停。 |
 
 錄影頁不套 16:9 舞台，播放器撐滿整個瀏覽器視窗。
 三層說明預設隱藏，滑鼠靠近該側邊緣才浮現，靜止 2.6 秒後淡出：
@@ -16,7 +16,7 @@
 | 位置 | 內容 | 觸發區 |
 |---|---|---|
 | 上 | 回首頁、段落標題、播放位置 | 上緣 96px |
-| 左 | 六段軌、鍵盤說明 | 左緣 232px，且限視窗上半 |
+| 左 | 四段軌、鍵盤說明 | 左緣 232px，且限視窗上半 |
 | 右 | 輸入點清單，可點擊跳至該點 | 右緣 340px，且限視窗上半 |
 
 兩個限制的理由：
@@ -48,7 +48,7 @@ make serve          # http://localhost:8080
 驗證方式：
 
 ```bash
-make clean && make      # 約 9 秒
+make clean && make      # 約 6 秒
 ```
 
 ## 錄影
@@ -58,7 +58,7 @@ make clean && make      # 約 9 秒
 
 | 錄製器 | 對象 | 做法 | 段落 |
 |---|---|---|---|
-| `scripts/record_cast.py` | shell 與 Rscript | tmux + asciinema | `01_cli` `04_r_style` `05_table1` `06_survival` `07_rebuild` |
+| `scripts/record_cast.py` | shell 與 Rscript | tmux + asciinema | `01_cli` `03_analysis` `04_rebuild` |
 | `scripts/record_claude.py` | Claude Code TUI | 自行開 PTY | `02_claude` |
 
 ```bash
@@ -96,13 +96,40 @@ tmux 會把 claude 的輸出重排進自己的格子，再送出「只重畫有�
   的訊息才姍姍來遲，那次重繪會把已經打進去的字清掉。所以還要再等一次靜止，
   而且送出前要比對回顯、確認提示詞真的在輸入框裡，沒收到就 `Ctrl-U` 清行重打。
   這是唯一可靠的作法：不管畫面為什麼被重繪，字沒進去就不按 Enter。
-- **錄到 `.cast.part`，六輪都完成才換上去。** 直接寫目標檔的話，
+- **錄到 `.cast.part`，五輪都完成才換上去。** 直接寫目標檔的話，
   中途失敗會把上一份完整錄影截斷，且無法復原。
 
 驗證方式：`site/casts/02_claude.json` 的第一個與第二個 marker 若只差十秒左右，
 就代表第一個提示詞被吃掉了——正常的一輪要幾十秒，而且兩個 marker 之間
 應該找得到提示詞本身的回顯。
 - **`tmux send-keys -l ";"` 的分號會被 tmux 自己的參數解析吃掉**，需送 `\;`。
+
+### 錄製環境必須與操作者的環境隔離
+
+直接錄會把操作者本人的環境一起錄進去：全域 hooks 的輸出、statusLine 的
+模型與額度、`~/.claude/CLAUDE.md` 的內容。這不只是美觀問題——
+`SessionStart` 的輸出比輸入框就緒還晚，那次重繪會把已經打進去的提示詞清掉，
+前幾輪因此空轉，而錄影看起來完全正常。
+
+`record_claude.py` 因此以 `CLAUDE_CONFIG_DIR` 指向 `$TMPDIR/dawa-claude-config`，
+只帶登入狀態，不帶 hooks、statusLine 與全域 CLAUDE.md。過程中的三個坑：
+
+| 症狀 | 原因 |
+|---|---|
+| 停在主題選擇畫面 | 全新設定目錄被當成第一次啟動。需預寫 `hasCompletedOnboarding` |
+| 停在信任對話框 | macOS 的 `$TMPDIR` 是 `/var/…` 的符號連結，claude 記的是解析後的 `/private/var/…`。兩個路徑都要寫進 `projects` |
+| `Not logged in` | 登入狀態綁在設定目錄上。改以 `security find-generic-password -s "Claude Code-credentials"` 從 Keychain 取出 `claudeAiOauth` 寫入隔離目錄 |
+
+`--bare` 看似對症（跳過 hooks 與 CLAUDE.md），但它同時停用 OAuth 與 keychain，
+只認 `ANTHROPIC_API_KEY`，訂閱制登入無法使用。
+
+### 驗收必須真的被呼叫
+
+`verify()` 原本寫好了卻沒有接上 `record()`，換檔的條件只有「marker 數量足夠」。
+但提示詞沒送出時 marker 一樣會被記下來——結果是用一份空轉的錄影，
+蓋掉上一份完整的。現在換檔前會檢查每一輪是否都有回答、且耗時超過 20 秒，
+未通過就保留原檔。`scripts/check_casts.py` 以同樣的判準在 `make check` 時再驗一次，
+並掃描錄影裡是否含個人環境的字串。
 
 Claude Code 段的工作目錄是 `$TMPDIR/dawa-claude-demo`，開始時只有 `raw/`，
 其餘檔案全部由該 session 產生，不影響本專案。
@@ -131,20 +158,22 @@ repo 是私有的，但 **Pages 站台是公開的**——私有 Pages 需要 En
 
 ## 資料
 
-`raw/` 下三份 CSV，來源為 [htlin222/learn-r-with-ai](https://github.com/htlin222/learn-r-with-ai)，權限設為唯讀。
+`raw/cohort.csv` 一份，來源為 [htlin222/learn-r-with-ai](https://github.com/htlin222/learn-r-with-ai)，權限設為唯讀。
+單一檔案即 single source of truth，課程全程不做跨檔合併。
 
-| 檔案 | 列數 | 欄位 |
-|---|---|---|
-| `patient_data_for_survival.csv` | 100 | treatment · age · gender · stage · time · status |
-| `patient_data.csv` | 100 | treatment · age · gender · los |
-| `patient_data_meta.csv` | 8 | 文獻整合分析用 |
+| 欄位 | 內容 |
+|---|---|
+| `patient_id` | 1–100，唯一 |
+| `age` | 31–81，**含 4 筆缺失** |
+| `sex` · `stage` · `treatment` | F/M · I–IV · Drug_A/Drug_B |
+| `time` · `status` | 追蹤月數（上限 36）· 1 = 死亡，0 = 設限 |
 
-資料含兩個不產生警告的陷阱：
+資料含兩項既有性質。它們不是錯誤，是分析途中必然遇到、且必須在報告裡解釋的東西：
 
-1. 兩份主檔的 `patient_id` 皆為 1–100。以 `age` 交叉比對，100 筆中僅 4 筆吻合，
-   兩者並非同一批個案。執行 `left_join(by = "patient_id")` 會輸出 100 列、
-   不產生警告，而全部欄位對應錯誤。
-2. 同一 `treatment` 變項，一份檔案編碼為 `Drug_A`/`Drug_B`，另一份為 `A`/`B`。
+1. **`age` 有 4 筆缺失。** Cox model 會整列排除，實際 n 為 96、events 66，
+   而且不產生任何警告——因此 `03_survival.R` 明確印出模型實際的 n。
+2. **行政設限。** 31 筆設限中有 25 筆 `time` 剛好等於 36（最長追蹤）。
+   中位追蹤時間因此需以 reverse KM 估計，不能取 `time` 的中位數。
 
 ## 執行結果
 
@@ -155,8 +184,8 @@ repo 是私有的，但 **Pages 站台是公開的**——私有 Pages 需要 En
 | 中位存活 | 17.5 月 |
 | KM by stage | advanced 10.6 月，early 28.3 月，log-rank p = 0.0004 |
 | KM by treatment | 17.5 月，17.7 月，log-rank p = 0.83 |
-| Cox（4 個共變項，EPV ≈ 17） | stage early HR 0.39 (0.23–0.64)；age HR 1.035 |
-| 次族群 by age | interaction p = 0.219；組內 p 為 0.0007 與 0.107 |
+| Cox（實際 96 人 66 events，EPV 16.5） | stage early HR 0.404 (0.24–0.67)；age HR 1.036 |
+| 次族群 by age | interaction p = 0.246；組內 p 為 0.0014 與 0.107 |
 
 治療組無差異、分期有差異、次族群的組間對比為雜訊——三項構成本課程後半的判讀內容。
 
@@ -171,16 +200,17 @@ scripts/        01_clean.R → 02_describe.R → 03_survival.R
                 record_cast.py · segments.py（shell 錄影）
                 record_claude.py（Claude Code 錄影）
                 serve.py（本機伺服器＋編輯寫檔端點）
-                make_reference_run.py（產出快照）
+                make_reference_run.py（重跑腳本並產出快照）
                 check_site.py（部署前的資產完整性檢查）
+                check_slides.py（投影片結構與數字出處檢查）
 output/         清洗後資料與表格（可刪，由 make 重建）
 figs/           圖檔（可刪，由 make 重建）
 docs/           cleaning_log.md — 每項處理決定的依據
 reference-run/  實際執行的 console 輸出與 checksum
 site/
   index.html      首頁：兩個入口與觀看進度
-  slides/         33 張投影片
-  cast/           6 段 asciinema 錄影
+  slides/         22 張投影片
+  cast/           4 段 asciinema 錄影
   casts/          .cast 與 marker 定義
   assets/         共用 CSS/JS、產出的 PNG、vendored player
                   overrides.js — 就地編輯的定版結果
@@ -193,6 +223,7 @@ site/
 | `→` / `空白` | 下一步 | 繼續播放（在輸入點暫停後） |
 | `←` | 上一步 | 倒退 |
 | `↓` `↑` | 換張 | 換段 |
+| `N` | 講者備忘稿 | — |
 | `E` | 就地編輯 | — |
 | `F` | 全螢幕 | 全螢幕 |
 | `Esc` / `H` | 回首頁 | 回首頁 |
@@ -222,18 +253,18 @@ cast/?seg=3&hud=1       第 3 段並釘住說明層
 
 ## 授課節奏
 
-| 時間 | 段落 | 錄影 |
-|---|---|---|
-| 0:00–0:08 | 概述：兩種操作模式與流程圖 | — |
-| 0:08–0:35 | CLI 基本功 | `01_cli` |
-| 0:35–1:05 | Claude Code：診斷、驗證、切點、寫腳本 | `02_claude` |
-| 1:05–1:15 | R 語言紀律 | `04_r_style` |
-| 1:15–1:40 | 描述性與 Table 1 | `05_table1` |
-| 1:40–2:05 | 存活分析與次族群 | `06_survival` |
-| 2:05–2:10 | 刪除後重建 | `07_rebuild` |
+| 時間 | 段落 | 投影片 | 錄影 |
+|---|---|---|---|
+| 0:00–0:08 | 開場：路線與資料 | 1–3 | — |
+| 0:08–0:22 | 終端機七個指令 | 4–6 | `01_cli` |
+| 0:22–0:40 | 交給 Claude Code：三個決定 | 7–10 | `02_claude` |
+| 0:40–0:55 | 描述性與 Table 1 | 11–13 | `03_analysis` |
+| 0:55–1:15 | 存活分析：KM 與 Cox | 14–18 | `03_analysis` |
+| 1:15–1:25 | 次族群與 interaction | 19–20 | — |
+| 1:25–1:30 | 刪掉重建 | 21–22 | `04_rebuild` |
 
-兩小時為壓縮後的配置。若逐項展開，實際約需 2.5 小時；
-將次族群段降為預告可收在兩小時內。
+投影片刻意寫得少：一張一個圖或一組數字，論述放在講者備忘稿（按 `N`）。
+時間分配可依現場調整——0:22–0:40 那段（三個決定）是全課核心，不建議壓縮。
 
 ## 依賴
 
