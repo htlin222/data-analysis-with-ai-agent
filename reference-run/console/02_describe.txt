@@ -1,11 +1,9 @@
-Warning message:
-package ‘ggplot2’ was built under R version 4.5.2 
 == 缺失值 ==
         變項 缺失數 缺失比例
   patient_id      0     0.0%
    treatment      0     0.0%
-         age      0     0.0%
-   age_group      0     0.0%
+         age      4     4.0%
+   age_group      4     4.0%
          sex      0     0.0%
        stage      0     0.0%
  stage_group      0     0.0%
@@ -13,48 +11,47 @@ package ‘ggplot2’ was built under R version 4.5.2
       status      0     0.0%
 
 == 連續變項 median (IQR) ==
- 變項   n     median (IQR)
-  age 100 57.0 (48.8-66.2)
- time 100  16.2 (5.7-35.8)
+ 變項   n 缺失     median (IQR)
+  age  96    4 57.5 (48.8-67.2)
+ time 100    0  16.2 (5.7-35.8)
 
 == 類別變項 n (%) ==
 treatment: Drug_A 52 (52%)  Drug_B 48 (48%)
 sex: 女 48 (48%)  男 52 (52%)
 stage: I 17 (17%)  II 32 (32%)  III 32 (32%)  IV 19 (19%)
 stage_group: advanced 51 (51%)  early 49 (49%)
-age_group: <60 62 (62%)  >=60 38 (38%)
+age_group: <60 58 (60%)  >=60 38 (40%)   [缺失 4，百分比以有值者為分母]
 
 == Table 1 ==
-# A tibble: 14 × 5
+# A tibble: 10 × 5
    `**變項**`     `**N**` `**advanced**  \nN = 51` `**early**  \nN = 49`
    <chr>          <chr>   <chr>                    <chr>                
- 1 年齡           100     55 (48-64)               59 (49-68)           
- 2 性別           100     <NA>                     <NA>                 
- 3 女             <NA>    26 (51%)                 22 (45%)             
- 4 男             <NA>    25 (49%)                 27 (55%)             
- 5 治療組         100     <NA>                     <NA>                 
- 6 Drug_A         <NA>    25 (49%)                 27 (55%)             
- 7 Drug_B         <NA>    26 (51%)                 22 (45%)             
- 8 分期           100     <NA>                     <NA>                 
- 9 I              <NA>    0 (0%)                   17 (35%)             
-10 II             <NA>    0 (0%)                   32 (65%)             
-11 III            <NA>    32 (63%)                 0 (0%)               
-12 IV             <NA>    19 (37%)                 0 (0%)               
-13 追蹤時間（月） 100     10 (4-26)                24 (7-36)            
-14 死亡           100     44 (86%)                 25 (51%)             
+ 1 年齡           96      56 (49-64)               59 (49-68)           
+ 2 Unknown        <NA>    3                        1                    
+ 3 性別           100     <NA>                     <NA>                 
+ 4 女             <NA>    26 (51%)                 22 (45%)             
+ 5 男             <NA>    25 (49%)                 27 (55%)             
+ 6 治療組         100     <NA>                     <NA>                 
+ 7 Drug_A         <NA>    25 (49%)                 27 (55%)             
+ 8 Drug_B         <NA>    26 (51%)                 22 (45%)             
+ 9 追蹤時間（月） 100     10 (4-26)                24 (7-36)            
+10 死亡           100     44 (86%)                 25 (51%)             
    `**p-value**`
    <chr>        
  1 0.3          
- 2 0.5          
- 3 <NA>         
+ 2 <NA>         
+ 3 0.5          
  4 <NA>         
- 5 0.5          
- 6 <NA>         
+ 5 <NA>         
+ 6 0.5          
  7 <NA>         
- 8 <0.001       
- 9 <NA>         
-10 <NA>         
-11 <NA>         
-12 <NA>         
-13 0.012        
-14 <0.001       
+ 8 <NA>         
+ 9 0.012        
+10 <0.001       
+The following warnings were returned during `modify_header()`:
+! For variable `age` (`stage_group`) and "estimate", "statistic", "p.value",
+  "conf.low", and "conf.high" statistics: cannot compute exact p-value with
+  ties
+! For variable `age` (`stage_group`) and "estimate", "statistic", "p.value",
+  "conf.low", and "conf.high" statistics: cannot compute exact confidence
+  intervals with ties

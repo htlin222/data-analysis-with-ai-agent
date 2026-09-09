@@ -1,29 +1,22 @@
-Warning message:
-package ‘ggplot2’ was built under R version 4.5.2 
 == 讀入 ==
-  patient_data_for_survival.csv : 100 列 x 7 欄
-  patient_data.csv              : 100 列 x 5 欄
+  raw/cohort.csv : 100 列 x 7 欄
 
-== 檢查一：唯一鍵 ==
-  surv 重複 id : 0
-  los  重複 id : 0
-  同 id 年齡吻合 : 4 / 100
-  !! 兩份檔案的 patient_id 指向不同的人，不可 join。分開處理。
+== 檢查一：缺失 ==
+   patient_id=0  age=4  sex=0  stage=0  treatment=0  time=0  status=0 
+  age 缺失 4 筆。不插補；Cox model 會整列排除，實際 n 因此低於 100。
 
-== 檢查二：類別編碼 ==
-  surv$treatment : Drug_A / Drug_B 
-  los$treatment  : A / B 
-  surv$stage     : I / II / III / IV 
+== 檢查二：範圍與邏輯 ==
+  age  : 31 - 81 歲
+  time : 0.5 - 36.0 個月
+  通過：time 皆為正、status 僅 0/1
 
-== 檢查三：缺失與範圍 ==
-  缺失值 : patient_id=0  treatment=0  age=0  gender=0  stage=0  time=0  status=0 
-  age    : 31 - 81
-  time   : 0.5 - 36.0 個月
-  邏輯檢查通過：time 皆為正、status 僅 0/1
+== 檢查三：設限型態 ==
+  死亡 69　設限 31
+  設限中有 25 筆 time = 36（最長追蹤），屬行政設限
 
 == 產出 ==
   output/cohort_clean.csv : 100 列 x 9 欄
-  output/los_clean.csv    : 100 列 x 5 欄
+  age_group 缺失 4 筆（源自 age）
 
 分組後人數：
         

@@ -23,17 +23,20 @@ treatment=Drug_B 48     33   17.7     9.0    32.2
   log-rank p = 0.8319
 
 == Cox model ==
+  世代 100 人 69 events；模型實際使用 96 人 66 events（age 缺失 4 筆整列排除）
+  EPV = 66 / 4 個共變項 = 16.5
              term    HR    95% CI        p
-              age 1.035 1.01-1.06 0.001140
-            sex男 1.053 0.63-1.76 0.844000
- stage_groupearly 0.388 0.23-0.64 0.000242
-  treatmentDrug_B 0.890 0.53-1.49 0.657000
+              age 1.036 1.01-1.06 0.001260
+            sex男 0.960 0.57-1.63 0.880000
+ stage_groupearly 0.404 0.24-0.67 0.000505
+  treatmentDrug_B 0.786 0.46-1.34 0.375000
 
 == 次族群（stage advanced vs early，依年齡分層）==
- age_group  n events   HR   lo   hi       p
-       <60 62     37 0.28 0.14 0.58 0.00066
-      >=60 38     32 0.55 0.26 1.14 0.10700
-  interaction p = 0.219
+  age 缺失 4 筆，無法分層，本分析排除
+ age_group  n events   HR   lo   hi      p
+       <60 58     34 0.30 0.14 0.63 0.0014
+      >=60 38     32 0.55 0.26 1.14 0.1070
+  interaction p = 0.246
 
 == 產出 ==
   figs/km_by_stage.png

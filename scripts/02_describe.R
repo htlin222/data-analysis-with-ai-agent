@@ -25,34 +25,40 @@ cont <- cohort |>
   pivot_longer(everything(), names_to = "變項", values_to = "值") |>
   group_by(變項) |>
   summarise(
-    n      = n(),
-    median = median(值),
-    q1     = quantile(值, .25),
-    q3     = quantile(值, .75),
+    # n 為「有值」的筆數，不是總列數。age 有缺失，兩者不相等。
+    n      = sum(!is.na(值)),
+    缺失   = sum(is.na(值)),
+    median = median(值, na.rm = TRUE),
+    q1     = quantile(值, .25, na.rm = TRUE),
+    q3     = quantile(值, .75, na.rm = TRUE),
     .groups = "drop"
   ) |>
   mutate(`median (IQR)` = sprintf("%.1f (%.1f-%.1f)", median, q1, q3)) |>
-  select(變項, n, `median (IQR)`)
+  select(變項, n, 缺失, `median (IQR)`)
 print(as.data.frame(cont), row.names = FALSE)
 
 cat("\n== 類別變項 n (%) ==\n")
 for (v in c("treatment", "sex", "stage", "stage_group", "age_group")) {
   tb <- table(cohort[[v]])
-  cat(sprintf("%s: %s\n", v,
+  na_n <- sum(is.na(cohort[[v]]))
+  cat(sprintf("%s: %s%s\n", v,
       paste(sprintf("%s %d (%.0f%%)", names(tb), tb, tb / sum(tb) * 100),
-            collapse = "  ")))
+            collapse = "  "),
+      if (na_n > 0) sprintf("   [缺失 %d，百分比以有值者為分母]", na_n) else ""))
 }
 
 # --- Table 1 --------------------------------------------------------------
 # 依 stage_group 分組。p value 只是描述兩組本來就長不一樣，不是假設檢定。
 tbl1 <- cohort |>
-  select(age, sex, treatment, stage, time, status, stage_group) |>
+  # 不放 stage：分組變項 stage_group 就是由它定義的，放進去只會得到
+  # 0% / 100% 的同義反覆。分組的來源變項不進 Table 1。
+  select(age, sex, treatment, time, status, stage_group) |>
   tbl_summary(
     by = stage_group,
     statistic = list(all_continuous() ~ "{median} ({p25}-{p75})",
                      all_categorical() ~ "{n} ({p}%)"),
     label = list(age ~ "年齡", sex ~ "性別", treatment ~ "治療組",
-                 stage ~ "分期", time ~ "追蹤時間（月）", status ~ "死亡")
+                 time ~ "追蹤時間（月）", status ~ "死亡")
   ) |>
   add_p() |>
   add_n() |>

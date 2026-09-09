@@ -78,7 +78,8 @@ suppressWarnings(suppressMessages(
          width = 8, height = 6, dpi = 150)))
 
 # --- Cox model ------------------------------------------------------------
-# 4 個共變項，69 events → EPV 約 17，站得住腳。
+# age 有缺失，coxph 會整列排除。模型實際的 n 與 events 都低於整個世代，
+# 而這件事不會出現在 HR 的表格裡，必須自己印出來。
 cox <- coxph(Surv(time, status) ~ age + sex + stage_group + treatment, data = cohort)
 cox_tidy <- tidy(cox, exponentiate = TRUE, conf.int = TRUE) |>
   transmute(term,
@@ -87,12 +88,18 @@ cox_tidy <- tidy(cox, exponentiate = TRUE, conf.int = TRUE) |>
             p = signif(p.value, 3))
 
 cat("\n== Cox model ==\n")
+cat(sprintf("  世代 %d 人 %d events；模型實際使用 %d 人 %d events（age 缺失 %d 筆整列排除）\n",
+            nrow(cohort), n_event, cox$n, cox$nevent, nrow(cohort) - cox$n))
+cat(sprintf("  EPV = %d / 4 個共變項 = %.1f\n", cox$nevent, cox$nevent / 4))
 print(as.data.frame(cox_tidy), row.names = FALSE)
 write_csv(cox_tidy, here("output", "cox.csv"))
 
 # --- 次族群：年齡 >=60 vs <60 ---------------------------------------------
 # 探索性質。該看的是 interaction p，不是各組各自的 p。
+# age 缺失者無法分層，於此分析排除。排除筆數要講出來，不能默默消失。
+n_drop <- sum(is.na(cohort$age_group))
 sub <- cohort |>
+  filter(!is.na(age_group)) |>
   group_by(age_group) |>
   group_modify(~ {
     m <- coxph(Surv(time, status) ~ stage_group, data = .x)
@@ -104,10 +111,12 @@ sub <- cohort |>
   }) |>
   ungroup()
 
-cox_int <- coxph(Surv(time, status) ~ stage_group * age_group, data = cohort)
+cox_int <- coxph(Surv(time, status) ~ stage_group * age_group,
+                 data = filter(cohort, !is.na(age_group)))
 p_int   <- anova(cox_int)[["Pr(>|Chi|)"]][4]
 
 cat("\n== 次族群（stage advanced vs early，依年齡分層）==\n")
+cat(sprintf("  age 缺失 %d 筆，無法分層，本分析排除\n", n_drop))
 print(as.data.frame(sub |> mutate(across(c(HR, lo, hi), ~ round(.x, 2)),
                                   p = signif(p, 3))), row.names = FALSE)
 cat(sprintf("  interaction p = %.3f\n", p_int))
