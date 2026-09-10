@@ -15,10 +15,4 @@ Rscript -e '
   if (length(miss)) install.packages(miss) else message("套件都在，跳過安裝")
 ' "${PKGS[@]}"
 
-# 驗收：裝起來了但載不動（缺系統相依）是常見狀況，
-# 而它只會在第一次 library() 時才爆——那時候學員已經坐在螢幕前了。
-Rscript -e '
-  pkgs <- commandArgs(TRUE)
-  invisible(lapply(pkgs, function(p) library(p, character.only = TRUE)))
-  cat(sprintf("R %s：%d 個套件皆可載入\n", getRversion(), length(pkgs)))
-' "${PKGS[@]}"
+# 驗收在 .devcontainer/verify.sh（postCreateCommand）。

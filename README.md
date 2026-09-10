@@ -283,17 +283,26 @@ cd demo        # 整堂課都待在這裡
 | `demo/README.md` | 流程、對答案的數字、卡住時的處理 |
 | `demo/PROMPTS.md` | 可直接複製貼上。P1–P5 與 `record_claude.py` 的 `PROMPTS` 逐字相同，其餘各段依同一原則寫成 |
 
-R 與課程用的七個套件由 devcontainer 備妥，開機即可用：
+`claude`、R 與課程用的七個套件由 devcontainer 備妥，開機即可用：
 
 | 位置 | 做的事 |
 |---|---|
+| `claude-code` feature | 裝 Claude Code CLI 到 `/usr/local/bin` |
 | `r-apt` feature（`installBspm`） | 裝 R，並開啟 bspm——`install.packages()` 因此走 r2u 的二進位 .deb |
-| `.devcontainer/install-r-packages.sh` | 裝七個套件，裝完逐一 `library()` 驗收 |
+| `.devcontainer/install-r-packages.sh` | `updateContentCommand`：裝七個套件 |
+| `.devcontainer/verify.sh` | `postCreateCommand`：驗收，壞掉就讓建置失敗 |
 
-`installBspm` 不是可選的細節：從原始碼編譯 `survminer` 這一串在 2 core 的 Codespace 要十幾分鐘，
-走 r2u 約一兩分鐘。`vscodeRSupport` 設 `none`，這門課只用終端機。
+三個決定的理由：
 
-學員端的確認指令：`Rscript -e 'library(survminer); cat("ok\n")'`。
+- **`installBspm` 不是可選的細節。** 從原始碼編譯 `survminer` 這一串在 2 core 的 Codespace
+  要十幾分鐘，走 r2u 約一兩分鐘。`vscodeRSupport` 設 `none`，這門課只用終端機。
+- **`claude` 有兩份是刻意的。** feature 裝的在 `/usr/local/bin`，dotfiles prewarm 另外裝一份
+  到 `~/.local/bin`；`remoteEnv` 把後者排在前面，所以實際跑到的是 prewarm 那份。
+  prewarm 來自另一個 repo，它掛掉的時候 feature 那份還在 PATH 上，課還是上得下去。
+- **驗收放在建置的最後一步。** 套件裝起來卻載不動（缺系統相依）只會在第一次 `library()`
+  時才爆，`claude` 不在 PATH 也一樣——那時候學員已經坐在螢幕前了。
+  `verify.sh` 失敗會讓 Codespace 建置失敗，並印出下一步該做什麼。
+
 `demo/PROMPTS.md` 的 **P0** 是給不在 Codespace 練習的人用的安裝提示詞。
 
 ## 授課節奏
