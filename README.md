@@ -220,6 +220,8 @@ output/         清洗後資料與表格（可刪，由 make 重建）
 figs/           圖檔（可刪，由 make 重建）
 docs/           cleaning_log.md — 每項處理決定的依據
 reference-run/  實際執行的 console 輸出與 checksum
+demo/           學員練習資料夾：README.md、PROMPTS.md、raw/ 的複本
+                學員產生的 scripts/ output/ figs/ docs/ 不進版控
 site/
   index.html      首頁：兩個入口與觀看進度
   slides/         22 張投影片
@@ -263,6 +265,117 @@ cast/?seg=3             第 3 段錄影
 cast/?seg=3&play=1      第 3 段並自動播放
 cast/?seg=3&hud=1       第 3 段並釘住說明層
 ```
+
+## 學員練習
+
+`demo/` 是學員自己動手的地方，內含 `raw/cohort.csv` 的複本與全部提示詞。
+
+```bash
+cd demo        # 整堂課都待在這裡
+```
+
+`claude` 在哪裡啟動就只看得到那裡——在專案根目錄啟動的話，它會看到 `scripts/`
+底下的成品直接照抄一份，練習就沒了。因此 `demo/` 自帶一份資料，
+且不含任何 `.R`。學員產生的四個資料夾由 `.gitignore` 擋掉，隨時可以 `rm -rf` 重來。
+
+| 檔案 | 內容 |
+|---|---|
+| `demo/README.md` | 流程、對答案的數字、卡住時的處理 |
+| `demo/PROMPTS.md` | 可直接複製貼上。P1–P5 與 `record_claude.py` 的 `PROMPTS` 逐字相同，其餘各段依同一原則寫成 |
+
+`claude`、R 與課程用的七個套件由 devcontainer 備妥，開機即可用：
+
+| 位置 | 做的事 | 失敗時 |
+|---|---|---|
+| `claude-code` feature | 裝 Claude Code CLI 到 `/usr/local/bin` | 建置失敗 |
+| `r-apt` feature（`installBspm`） | 裝 R，並開啟 bspm——`install.packages()` 因此走 r2u 的二進位 .deb | 建置失敗 |
+| `prewarm.sh`（`onCreateCommand`） | dotfiles：zsh、tmux、neovim | **警告後繼續** |
+| `install-r-packages.sh`（`updateContentCommand`） | 裝七個套件，三層來源逐層退 | 建置失敗 |
+| `verify.sh`（`postCreateCommand`） | 逐項驗收 | 建置失敗 |
+
+只有 dotfiles 那一層是「有更好、沒有也能上課」，因此它是唯一不擋建置的。
+課程真正需要的東西全部硬失敗——寧可 Codespace 建不起來，也不要學員坐下來才發現。
+
+三個決定的理由：
+
+- **`installBspm` 不是可選的細節。** 從原始碼編譯 `survminer` 這一串在 2 core 的 Codespace
+  要十幾分鐘，走 r2u 約一兩分鐘。`vscodeRSupport` 設 `none`，這門課只用終端機。
+- **`claude` 有兩份是刻意的。** feature 裝的在 `/usr/local/bin`，dotfiles prewarm 另外裝一份
+  到 `~/.local/bin`；`remoteEnv` 把後者排在前面，所以實際跑到的是 prewarm 那份。
+  prewarm 來自另一個 repo，它掛掉的時候 feature 那份還在 PATH 上，課還是上得下去。
+- **驗收放在建置的最後一步。** 套件裝起來卻載不動（缺系統相依）只會在第一次 `library()`
+  時才爆，`claude` 不在 PATH 也一樣——那時候學員已經坐在螢幕前了。
+  `verify.sh` 失敗會讓 Codespace 建置失敗，並印出下一步該做什麼。
+
+三個沉默的失敗，都是實際驗證過才改的：
+
+| 原本的寫法 | 為什麼會無聲無息地成功 |
+|---|---|
+| `curl -fsSL ... \| bash` | 管線的離開碼取自右邊的 `bash`。curl 404 時 stdin 是空的，`bash` 跑完回 0——什麼都沒裝，卻回報成功 |
+| `install.packages(miss)` | 裝不起來時只發 warning，不設離開碼。要自己回頭比對 `installed.packages()` 才知道 |
+| `verify.sh` 用相對路徑找資料 | 學員多半是 `cd demo` 之後才想到要檢查，那時相對路徑指到不存在的地方。改以 `BASH_SOURCE` 定位 |
+
+`verify.sh` 從任何目錄跑都可以，學員自己重跑也行。
+
+### 套件的三層來源
+
+一個來源掛掉就換下一個，任何一層成功就結束。三者的失敗方式不一樣，不會同時壞：
+
+| 層 | 來源 | 速度 | 什麼時候輪到它 |
+|---|---|---|---|
+| 1 | bspm / r2u（apt 二進位） | 最快 | 預設 |
+| 2 | Posit P3M 定日快照（二進位） | 快 | r2u 掛掉或沒有 bspm |
+| 3 | CRAN 原始碼 | 十幾分鐘 | 前兩層都不通 |
+
+快照的日期**按 R 的版本挑**，不是寫死一個。套件版本與 R 版本綁在一起：實測 R 4.3.3
+配 2026-09-01 的快照，`survminer` 那條相依鏈沒有對應的二進位，退回原始碼後編譯失敗
+（`R_ClosureFormals` was not declared——那是 R 4.4 之後才有的 API）；同一台機器換成
+2024-06-01 的快照，全部走二進位，12 秒。
+
+recommended 套件（`survival`、`Matrix`、`MASS`）不走這個階梯，一律由 apt 的
+`r-recommended` 提供。實測 R 4.3.3 從 CRAN 抓 `Matrix` 會被版本條件擋掉（最新版要
+R ≥ 4.4），連帶 `survival` 裝不起來——而 `survival` 正是這門課的主角。
+
+### 兩個只有實跑才會發現的問題
+
+| 問題 | 症狀 | 處理 |
+|---|---|---|
+| locale 不是 UTF-8 | R 連 parse 都過不了：`invalid multibyte character in parser`。課程腳本用中文當欄名，而錯誤訊息完全看不出是 locale 的問題 | `containerEnv` 設 `LANG`／`LC_ALL` 為 `C.UTF-8`，`verify.sh` 確認它生效 |
+| 裝好了但載不動 | `survival` 在 `installed.packages()` 裡，`library(survival)` 卻失敗——相依的 `Matrix` 不在 | 安裝的判準改為「載得動」而非「在清單上」，於另一個行程用 `requireNamespace()` 驗 |
+
+`verify.sh` 最後會真的讀一次 `demo/raw/cohort.csv` 並配一條 KM，比對中位存活是不是
+17.5 個月。跑得動而且數字對，才表示這個環境接得住整堂課。
+
+### Prebuild
+
+Prebuild 把整個建置過程先跑好、存成映像，之後開 Codespace 從 5–10 分鐘降到約 30 秒。
+一整班同時建的時候差別很大。
+
+設定在 **Settings → Codespaces → Set up prebuild**（是 repo 設定，不是版控裡的檔案）：
+
+| 欄位 | 選什麼 | 理由 |
+|---|---|---|
+| Configuration file | `.devcontainer/devcontainer.json` | 只有這一份 |
+| Branch | `main` | 學員從 main 開 |
+| Trigger | Configuration change | 課程內容改動不必重建；改到 `.devcontainer/` 才要 |
+| Region | 學員所在區域 | 映像存在該區才用得到 |
+
+**三段生命週期指令的分工正是為了 prebuild**，不是隨手擺的：
+
+| 指令 | 何時跑 | 放什麼 |
+|---|---|---|
+| `onCreateCommand` | prebuild 時 | dotfiles prewarm |
+| `updateContentCommand` | prebuild 時 | **七個 R 套件**——最貴的一段，烤進映像 |
+| `postCreateCommand` | 從 prebuild 開 Codespace 時 | `verify.sh` |
+
+`postCreateCommand` **不會**在 prebuild 時執行。驗收放在那裡是刻意的：
+映像是幾天前烤的，開出來的 Codespace 究竟對不對，要在學員手上這一台驗，不是在映像裡驗。
+
+Prebuild 走 GitHub Actions。公開 repo 的標準 runner 不計費，但 prebuild 的映像會佔
+Codespaces 的儲存額度——開之前先看一眼 Settings → Billing 的 Codespaces 用量。
+
+`demo/PROMPTS.md` 的 **P0** 是給不在 Codespace 練習的人用的安裝提示詞。
+環境真的救不回來時的授課備案在 `demo/README.md` 的「環境壞掉時」。
 
 ## 授課節奏
 

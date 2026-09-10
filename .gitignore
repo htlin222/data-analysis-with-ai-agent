@@ -25,3 +25,13 @@ __pycache__/
 
 .dev.vars*
 !.dev.vars.example
+
+# demo/ 是學員的練習資料夾。raw/ 與兩份 .md 進版控，
+# 其餘全部由學員自己的 session 產生——不追蹤，才不會蓋掉別人的練習，
+# 也才能隨時 rm -rf 重來。開頭斜線限定只忽略 demo/ 下的這幾個。
+/demo/scripts/
+/demo/output/
+/demo/figs/
+/demo/docs/
+/demo/Makefile
+/demo/Rplots.pdf
