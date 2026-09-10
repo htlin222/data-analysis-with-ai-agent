@@ -10,7 +10,7 @@
     },
     "ghcr.io/anthropics/devcontainer-features/claude-code:1": {}
   },
-  "onCreateCommand": "curl -fsSL https://raw.githubusercontent.com/htlin222/dotfiles/main/start/codespace_prewarm.sh | bash",
+  "onCreateCommand": "bash .devcontainer/prewarm.sh",
   "updateContentCommand": "bash .devcontainer/install-r-packages.sh",
   "postCreateCommand": "bash .devcontainer/verify.sh",
   "remoteEnv": {

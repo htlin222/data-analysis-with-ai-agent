@@ -285,12 +285,16 @@ cd demo        # 整堂課都待在這裡
 
 `claude`、R 與課程用的七個套件由 devcontainer 備妥，開機即可用：
 
-| 位置 | 做的事 |
-|---|---|
-| `claude-code` feature | 裝 Claude Code CLI 到 `/usr/local/bin` |
-| `r-apt` feature（`installBspm`） | 裝 R，並開啟 bspm——`install.packages()` 因此走 r2u 的二進位 .deb |
-| `.devcontainer/install-r-packages.sh` | `updateContentCommand`：裝七個套件 |
-| `.devcontainer/verify.sh` | `postCreateCommand`：驗收，壞掉就讓建置失敗 |
+| 位置 | 做的事 | 失敗時 |
+|---|---|---|
+| `claude-code` feature | 裝 Claude Code CLI 到 `/usr/local/bin` | 建置失敗 |
+| `r-apt` feature（`installBspm`） | 裝 R，並開啟 bspm——`install.packages()` 因此走 r2u 的二進位 .deb | 建置失敗 |
+| `prewarm.sh`（`onCreateCommand`） | dotfiles：zsh、tmux、neovim | **警告後繼續** |
+| `install-r-packages.sh`（`updateContentCommand`） | 裝七個套件，失敗重試三次 | 建置失敗 |
+| `verify.sh`（`postCreateCommand`） | 逐項驗收 | 建置失敗 |
+
+只有 dotfiles 那一層是「有更好、沒有也能上課」，因此它是唯一不擋建置的。
+課程真正需要的東西全部硬失敗——寧可 Codespace 建不起來，也不要學員坐下來才發現。
 
 三個決定的理由：
 
@@ -302,6 +306,16 @@ cd demo        # 整堂課都待在這裡
 - **驗收放在建置的最後一步。** 套件裝起來卻載不動（缺系統相依）只會在第一次 `library()`
   時才爆，`claude` 不在 PATH 也一樣——那時候學員已經坐在螢幕前了。
   `verify.sh` 失敗會讓 Codespace 建置失敗，並印出下一步該做什麼。
+
+三個沉默的失敗，都是實際驗證過才改的：
+
+| 原本的寫法 | 為什麼會無聲無息地成功 |
+|---|---|
+| `curl -fsSL ... \| bash` | 管線的離開碼取自右邊的 `bash`。curl 404 時 stdin 是空的，`bash` 跑完回 0——什麼都沒裝，卻回報成功 |
+| `install.packages(miss)` | 裝不起來時只發 warning，不設離開碼。要自己回頭比對 `installed.packages()` 才知道 |
+| `verify.sh` 用相對路徑找資料 | 學員多半是 `cd demo` 之後才想到要檢查，那時相對路徑指到不存在的地方。改以 `BASH_SOURCE` 定位 |
+
+`verify.sh` 從任何目錄跑都可以，學員自己重跑也行。
 
 `demo/PROMPTS.md` 的 **P0** 是給不在 Codespace 練習的人用的安裝提示詞。
 

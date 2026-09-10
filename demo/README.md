@@ -36,7 +36,7 @@ Codespace 已經內建 `claude`、R 與課程用的七個套件，你不需要�
 開機時已經驗收過一次，失敗的話你會在建置紀錄裡看到 `FAIL`。要自己再確認一次：
 
 ```bash
-bash ../.devcontainer/verify.sh
+bash ../.devcontainer/verify.sh    # 從哪個目錄跑都可以
 ```
 
 **第一次打 `claude` 需要登入**，照畫面走完就好，之後不用再登。
