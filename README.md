@@ -283,7 +283,18 @@ cd demo        # 整堂課都待在這裡
 | `demo/README.md` | 流程、對答案的數字、卡住時的處理 |
 | `demo/PROMPTS.md` | 可直接複製貼上。P1–P5 與 `record_claude.py` 的 `PROMPTS` 逐字相同，其餘各段依同一原則寫成 |
 
-Codespace 的 devcontainer 目前不含 R，`demo/PROMPTS.md` 的 **P0** 是安裝用的提示詞，請在上課前先跑完。
+R 與課程用的七個套件由 devcontainer 備妥，開機即可用：
+
+| 位置 | 做的事 |
+|---|---|
+| `r-apt` feature（`installBspm`） | 裝 R，並開啟 bspm——`install.packages()` 因此走 r2u 的二進位 .deb |
+| `.devcontainer/install-r-packages.sh` | 裝七個套件，裝完逐一 `library()` 驗收 |
+
+`installBspm` 不是可選的細節：從原始碼編譯 `survminer` 這一串在 2 core 的 Codespace 要十幾分鐘，
+走 r2u 約一兩分鐘。`vscodeRSupport` 設 `none`，這門課只用終端機。
+
+學員端的確認指令：`Rscript -e 'library(survminer); cat("ok\n")'`。
+`demo/PROMPTS.md` 的 **P0** 是給不在 Codespace 練習的人用的安裝提示詞。
 
 ## 授課節奏
 

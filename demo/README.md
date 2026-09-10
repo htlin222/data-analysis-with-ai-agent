@@ -32,13 +32,15 @@ ls           # 應該看到 raw 和 PROMPTS.md
 chmod a-w raw/cohort.csv
 ```
 
-確認 R 在不在：
+確認 R 與套件都在：
 
 ```bash
-Rscript --version
+Rscript -e 'library(survminer); cat("ok\n")'
 ```
 
-沒有反應就先做 `PROMPTS.md` 的 **P0**（安裝，約 3–5 分鐘）。這一步請在上課前先跑完。
+印出 `ok` 就可以開始。Codespace 已經內建 R 與課程用的七個套件，你不需要裝任何東西。
+
+在自己的電腦上做這份練習、而 `Rscript --version` 沒有反應的話，用 `PROMPTS.md` 的 **P0** 讓 Claude 幫你裝。
 
 ---
 

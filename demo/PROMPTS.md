@@ -10,9 +10,10 @@ P1–P5 與課程錄影中那一段真實 session 使用的提示詞逐字相同
 
 ---
 
-## P0 · 準備（上課前先做，約 3–5 分鐘）
+## P0 · 只有在沒有 R 的環境才需要
 
-只有在 `Rscript --version` 沒有反應時才需要。
+Codespace 已經內建 R 與課程用的七個套件（見 `.devcontainer/`），**上課時跳過這一段**。
+在自己的電腦上練習、而 `Rscript --version` 沒有反應時才用。
 
 ```
 這台機器沒有 R。請幫我裝 R 以及這些套件：tidyverse、here、gtsummary、gt、survival、survminer、broom。
