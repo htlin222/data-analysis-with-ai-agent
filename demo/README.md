@@ -124,6 +124,25 @@ grep -n 'setwd\|rm(list' scripts/*.R    # 沒有輸出就是乾淨的
 
 ---
 
+## 環境壞掉時
+
+**課還是上得下去。** 這門課的核心不在跑程式，在你怎麼交代那三個決定。
+
+| 情況 | 還能做什麼 |
+|---|---|
+| R 或套件裝不起來 | **P1–P4 完全不需要 R**——讀資料、逼它講三個決定、寫出 `01_clean.R`，整段照做 |
+| 要對數字 | `../reference-run/console/` 有三支腳本的實際輸出，逐字都是真的跑出來的 |
+| 想繼續判讀 | 把那些輸出貼給 `claude`，請它解釋 `interaction p = 0.246` 代表什麼——後半堂照樣進行 |
+| 整個 Codespace 開不起來 | 課程網站有四段終端機實錄，包含完整的 Claude Code session |
+
+先試著自己修：
+
+```bash
+bash ../.devcontainer/install-r-packages.sh          # 會自動換來源，最多三層
+bash ../.devcontainer/install-r-packages.sh p3m      # 指定只用某一層
+bash ../.devcontainer/verify.sh                      # 重驗
+```
+
 ## 想看正確答案
 
 講師的版本在專案根目錄，練習做完再看：

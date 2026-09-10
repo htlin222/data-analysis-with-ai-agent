@@ -13,6 +13,10 @@
   "onCreateCommand": "bash .devcontainer/prewarm.sh",
   "updateContentCommand": "bash .devcontainer/install-r-packages.sh",
   "postCreateCommand": "bash .devcontainer/verify.sh",
+  "containerEnv": {
+    "LANG": "C.UTF-8",
+    "LC_ALL": "C.UTF-8"
+  },
   "remoteEnv": {
     "PATH": "${containerEnv:HOME}/.local/bin:${containerEnv:PATH}"
   },

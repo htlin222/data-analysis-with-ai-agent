@@ -38,9 +38,28 @@ check Rscript  Rscript --version
 # 套件裝起來了但載不動（缺系統相依）只會在第一次 library() 時才爆。
 check "R packages" Rscript -e '
   pkgs <- commandArgs(TRUE)
-  invisible(lapply(pkgs, function(p) library(p, character.only = TRUE)))
+  # 不抑制的話，tidyverse 的載入橫幅會佔掉輸出的第一行，蓋住下面這句。
+  invisible(lapply(pkgs, function(p)
+    suppressPackageStartupMessages(library(p, character.only = TRUE))))
   cat(sprintf("%d 個套件皆可載入", length(pkgs)))
 ' "${PKGS[@]}"
+
+# 課程的 R 腳本用中文當欄名。locale 不是 UTF-8 的話，R 連 parse 都過不了
+# （invalid multibyte character in parser），而錯誤訊息完全看不出是 locale
+# 的問題。devcontainer.json 的 containerEnv 設了 LANG/LC_ALL，這裡確認它生效。
+check "UTF-8" Rscript -e 'x <- c(變項 = 1); cat("可解析中文識別字：", names(x))'
+
+# 端到端：真的讀 demo 的資料、真的配一次 KM。跑得動而且數字對，
+# 才表示這個環境接得住整堂課。17.5 是 reference-run 的中位存活。
+check "KM smoke" bash -c '
+  Rscript -e "
+    suppressPackageStartupMessages(library(survival))
+    d <- read.csv(file.path(commandArgs(TRUE)[1], \"demo/raw/cohort.csv\"))
+    m <- summary(survfit(Surv(time, status) ~ 1, data = d))\$table[[\"median\"]]
+    if (abs(m - 17.5) > 0.05) { cat(sprintf(\"中位存活 %.1f，應為 17.5\", m)); quit(status = 1) }
+    cat(sprintf(\"中位存活 %.1f 月，與 reference-run 相同\", m))
+  " "$1"
+' _ "$ROOT"
 
 # 資料要在，而且要是完整的 100 列——半份資料跑得動，但數字全錯。
 check "demo/raw" bash -c '

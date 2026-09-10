@@ -290,7 +290,7 @@ cd demo        # 整堂課都待在這裡
 | `claude-code` feature | 裝 Claude Code CLI 到 `/usr/local/bin` | 建置失敗 |
 | `r-apt` feature（`installBspm`） | 裝 R，並開啟 bspm——`install.packages()` 因此走 r2u 的二進位 .deb | 建置失敗 |
 | `prewarm.sh`（`onCreateCommand`） | dotfiles：zsh、tmux、neovim | **警告後繼續** |
-| `install-r-packages.sh`（`updateContentCommand`） | 裝七個套件，失敗重試三次 | 建置失敗 |
+| `install-r-packages.sh`（`updateContentCommand`） | 裝七個套件，三層來源逐層退 | 建置失敗 |
 | `verify.sh`（`postCreateCommand`） | 逐項驗收 | 建置失敗 |
 
 只有 dotfiles 那一層是「有更好、沒有也能上課」，因此它是唯一不擋建置的。
@@ -317,7 +317,37 @@ cd demo        # 整堂課都待在這裡
 
 `verify.sh` 從任何目錄跑都可以，學員自己重跑也行。
 
+### 套件的三層來源
+
+一個來源掛掉就換下一個，任何一層成功就結束。三者的失敗方式不一樣，不會同時壞：
+
+| 層 | 來源 | 速度 | 什麼時候輪到它 |
+|---|---|---|---|
+| 1 | bspm / r2u（apt 二進位） | 最快 | 預設 |
+| 2 | Posit P3M 定日快照（二進位） | 快 | r2u 掛掉或沒有 bspm |
+| 3 | CRAN 原始碼 | 十幾分鐘 | 前兩層都不通 |
+
+快照的日期**按 R 的版本挑**，不是寫死一個。套件版本與 R 版本綁在一起：實測 R 4.3.3
+配 2026-09-01 的快照，`survminer` 那條相依鏈沒有對應的二進位，退回原始碼後編譯失敗
+（`R_ClosureFormals` was not declared——那是 R 4.4 之後才有的 API）；同一台機器換成
+2024-06-01 的快照，全部走二進位，12 秒。
+
+recommended 套件（`survival`、`Matrix`、`MASS`）不走這個階梯，一律由 apt 的
+`r-recommended` 提供。實測 R 4.3.3 從 CRAN 抓 `Matrix` 會被版本條件擋掉（最新版要
+R ≥ 4.4），連帶 `survival` 裝不起來——而 `survival` 正是這門課的主角。
+
+### 兩個只有實跑才會發現的問題
+
+| 問題 | 症狀 | 處理 |
+|---|---|---|
+| locale 不是 UTF-8 | R 連 parse 都過不了：`invalid multibyte character in parser`。課程腳本用中文當欄名，而錯誤訊息完全看不出是 locale 的問題 | `containerEnv` 設 `LANG`／`LC_ALL` 為 `C.UTF-8`，`verify.sh` 確認它生效 |
+| 裝好了但載不動 | `survival` 在 `installed.packages()` 裡，`library(survival)` 卻失敗——相依的 `Matrix` 不在 | 安裝的判準改為「載得動」而非「在清單上」，於另一個行程用 `requireNamespace()` 驗 |
+
+`verify.sh` 最後會真的讀一次 `demo/raw/cohort.csv` 並配一條 KM，比對中位存活是不是
+17.5 個月。跑得動而且數字對，才表示這個環境接得住整堂課。
+
 `demo/PROMPTS.md` 的 **P0** 是給不在 Codespace 練習的人用的安裝提示詞。
+環境真的救不回來時的授課備案在 `demo/README.md` 的「環境壞掉時」。
 
 ## 授課節奏
 
