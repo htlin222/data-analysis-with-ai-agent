@@ -346,6 +346,34 @@ R ≥ 4.4），連帶 `survival` 裝不起來——而 `survival` 正是這門�
 `verify.sh` 最後會真的讀一次 `demo/raw/cohort.csv` 並配一條 KM，比對中位存活是不是
 17.5 個月。跑得動而且數字對，才表示這個環境接得住整堂課。
 
+### Prebuild
+
+Prebuild 把整個建置過程先跑好、存成映像，之後開 Codespace 從 5–10 分鐘降到約 30 秒。
+一整班同時建的時候差別很大。
+
+設定在 **Settings → Codespaces → Set up prebuild**（是 repo 設定，不是版控裡的檔案）：
+
+| 欄位 | 選什麼 | 理由 |
+|---|---|---|
+| Configuration file | `.devcontainer/devcontainer.json` | 只有這一份 |
+| Branch | `main` | 學員從 main 開 |
+| Trigger | Configuration change | 課程內容改動不必重建；改到 `.devcontainer/` 才要 |
+| Region | 學員所在區域 | 映像存在該區才用得到 |
+
+**三段生命週期指令的分工正是為了 prebuild**，不是隨手擺的：
+
+| 指令 | 何時跑 | 放什麼 |
+|---|---|---|
+| `onCreateCommand` | prebuild 時 | dotfiles prewarm |
+| `updateContentCommand` | prebuild 時 | **七個 R 套件**——最貴的一段，烤進映像 |
+| `postCreateCommand` | 從 prebuild 開 Codespace 時 | `verify.sh` |
+
+`postCreateCommand` **不會**在 prebuild 時執行。驗收放在那裡是刻意的：
+映像是幾天前烤的，開出來的 Codespace 究竟對不對，要在學員手上這一台驗，不是在映像裡驗。
+
+Prebuild 走 GitHub Actions。公開 repo 的標準 runner 不計費，但 prebuild 的映像會佔
+Codespaces 的儲存額度——開之前先看一眼 Settings → Billing 的 Codespaces 用量。
+
 `demo/PROMPTS.md` 的 **P0** 是給不在 Codespace 練習的人用的安裝提示詞。
 環境真的救不回來時的授課備案在 `demo/README.md` 的「環境壞掉時」。
 
